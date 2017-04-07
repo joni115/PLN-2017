@@ -15,8 +15,7 @@ class NGram(object):
 
         for sent in sents:
             sent += ['</s>']
-            if n > 1:
-                sent = ['<s>'] + sent
+            sent = ['<s>'] * (n-1) + sent
             for i in range(len(sent) - n + 1):
                 ngram = tuple(sent[i: i + n])
                 counts[ngram] += 1
@@ -52,11 +51,7 @@ class NGram(object):
         n = self.n
 
         sent += ['</s>']
-
-        count_label = n
-        while count_label > 1:
-            sent = ['<s>'] + sent
-            count_label -= 1
+        sent = ['<s>'] * (n - 1) + sent
 
         prob = 1
         for index_word in range(n - 1, len(sent)):
@@ -72,15 +67,10 @@ class NGram(object):
         log2 = lambda x: log(x, 2) if x > 0 else float('-inf')
 
         sent += ['</s>']
-
-        count_label = n
-        while count_label > 1:
-            sent = ['<s>'] + sent
-            count_label -= 1
+        sent = ['<s>'] * (n-1) + sent
 
         prob = 0
         for index_word in range(n - 1, len(sent)):
             prob += log2(self.cond_prob(sent[index_word], sent[index_word-n+1: index_word]))
 
         return prob
-

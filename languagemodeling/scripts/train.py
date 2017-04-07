@@ -22,8 +22,8 @@ from nltk.tokenize import RegexpTokenizer
 from languagemodeling.ngram import NGram
 
 def gutenberg(arg):
-    n = int(opts['-n'])
-    filename = opts['-o']
+    n = int(arg['-n'])
+    filename = arg['-o']
 
     sents = gutenberg.sents('austen-emma.txt')
     # train the model
@@ -51,9 +51,8 @@ def my_token(filename, directory=DEFAULT_DIR):
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
-
-    if opts['-n'] is None:
+    print (not opts['-n'])
+    if not opts['-n']:
         gutenberg(opts)
     else:
         print (my_token(opts['-o']))
-
