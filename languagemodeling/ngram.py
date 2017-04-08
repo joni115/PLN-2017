@@ -112,6 +112,23 @@ class NGramGenerator:
 
     def generate_sent(self):
         """Randomly generate a sentence."""
+        n = self.model.n
+
+        # save the sentce in sent_list i.e. if sentece = 'hola como andas'
+        # sent_list = ['hola', 'como', 'andas']
+        sent_list = ['<s>'] * (n-1)
+        prev_tokens = tuple(sent_list)
+        next_token = ''
+        while '</s>' not in next_token:
+            # generate a sent with generate_token.
+            next_token = self.generate_token(prev_tokens)
+            # space between the words
+            sent_list += [next_token]
+            # we want the n-1 word for generate the next token
+            prev_tokens = tuple(sent_list[len(sent_list)-n + 1:])
+
+        # remove <s>s and </s> for test. return a list.
+        return sent_list[n-1:len(sent_list) - 1]
 
 
 
@@ -122,7 +139,7 @@ class NGramGenerator:
         n = self.model.n
 
         if not prev_tokens:
-            prev_tokens = []
+            prev_tokens = ()
         assert len(prev_tokens) == n - 1
 
         # a copy of self.sorted_probs[prev_tokens]
@@ -138,17 +155,3 @@ class NGramGenerator:
             p += pi
 
         return next_token
-
-
-
-
-
-sents = [
-    'el gato come pescado .'.split(),
-    'la gata come salmón .'.split(),
-]
-
-
-ngram = NGram(2, sents)
-generator = NGramGenerator(ngram)
-print (generator.sorted_probs)
