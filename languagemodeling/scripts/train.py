@@ -36,7 +36,6 @@ def gutenberg(arg):
     f.close()
 
 def my_token(filename, directory=DEFAULT_DIR):
-    corpus = PlaintextCorpusReader(directory, filename)
     pattern = r'''(?ix)    # set flag to allow verbose regexps
             (?:sr\.|sra\.)
             | (?:[A-Z]\.)+        # abbreviations, e.g. U.S.A.
