@@ -46,9 +46,12 @@ if __name__ == '__main__':
         generator = NGramGenerator(ngram)
         file_output.write(str(i) + 'NGram')
         file_output.write('\r\n')
+        # generate N sentences
         for _ in range(0, n):
             list_sentence = generator.generate_sent()
+            # join list with spaces between word
             file_output.write(' '.join(list_sentence) + '\n')
+        # put an EOL
         file_output.write('\r\n')
 
     file_output.close()
