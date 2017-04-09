@@ -1,12 +1,17 @@
-"""Train an n-gram model.
+"""
+Train an n-gram model.
 
 Usage:
-  train.py [-n <n>] [-o <file>]
+  train.py -n <n> [-m <model>] -i <file> --o <file>
   train.py -h | --help
 
 Options:
-  -n <n>        Order of the model [default: None].
-  -o <file>     Output model file [default: ejemplo.txt].
+  -n <n>        Order of the model.
+  -m <model>    Model to use [default: ngram]:
+                  ngram: Unsmoothed n-grams.
+                  addone: N-grams with add-one smoothing.
+  -i <file>     Input corpus.
+  -o <file>     Output model file.
   -h --help     Show this screen.
 """
 
@@ -19,25 +24,21 @@ from nltk.corpus import gutenberg
 from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
-from languagemodeling.ngram import NGram
+# if I had not put, it wouldn't reconize languagemodeling
+import sys
+sys.path.append('../.')
+from languagemodeling.ngram import NGram, AddOneNGram
 
-def gutenberg(arg):
-    n = int(arg['-n'])
-    filename = arg['-o']
+DEFAULT_DIR = 'corpus'
 
-    sents = gutenberg.sents('austen-emma.txt')
-    # train the model
-    model = NGram(n, sents)
+if __name__ == '__main__':
+    opts = docopt(__doc__)
 
-    # save it
-    f = open(filename, 'wb')
-    pickle.dump(model, f)
-    print ("Se guardara en", filename)
-    f.close()
+    corpus = opts['-i']
 
-def my_token(filename, directory=DEFAULT_DIR):
+    # load the data
     pattern = r'''(?ix)    # set flag to allow verbose regexps
-            (?:sr\.|sra\.)
+            (?:sr\.|sra\.|mr\.|mrs\.)
             | (?:[A-Z]\.)+        # abbreviations, e.g. U.S.A.
             | \w+(?:-\w+)*        # words with optional internal hyphens
             | \$?\d+(?:\.\d+)?%?  # currency and percentages, e.g. $12.40, 82%
@@ -45,13 +46,22 @@ def my_token(filename, directory=DEFAULT_DIR):
             | [][.,;"'?():-_`]
             '''
     tokenizer = RegexpTokenizer(pattern)
-    corpus = PlaintextCorpusReader(DEFAULT_DIR, 'ejemplo.txt', word_tokenizer=tokenizer)
-    return corpus.sents()
+    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus, word_tokenizer=tokenizer)
+    sents = corpus.sents()
 
-if __name__ == '__main__':
-    opts = docopt(__doc__)
-    print (not opts['-n'])
-    if not opts['-n']:
-        gutenberg(opts)
+    # train the model
+    type_model = opts['-m']
+    n = int(opts['-n'])
+    if type_model == 'ngram':
+        model = NGram(n, sents)
+    elif type_model == 'addone':
+        model = AddOneNGram(n, sents)
     else:
-        print (my_token(opts['-o']))
+        print ('modelo erroneo')
+        exit(0)
+
+    # save it
+    filename = opts['-o']
+    f = open(filename, 'wb')
+    pickle.dump(model, f)
+    f.close()
