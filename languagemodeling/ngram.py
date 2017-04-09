@@ -33,7 +33,7 @@ class NGram(object):
 
         tokens -- the n-gram or (n-1)-gram tuple.
         """
-        return self.counts.get(tokens)
+        return self.counts[tokens]
 
     def cond_prob(self, token, prev_tokens=None):
 
@@ -155,3 +155,42 @@ class NGramGenerator:
             p += pi
 
         return next_token
+
+class AddOneNGram(NGram):
+    """
+       Todos los métodos de NGram.
+       Inheritance class from NGRam.
+    """
+    def __init__(self, n, sents):
+        super().__init__(n, sents)
+        tokens = self.tokens
+
+        # a list of type words
+        type_words = []
+        for token in tokens:
+            word = token[0]
+            if word not in type_words:
+                type_words.append(word)
+
+        self.n_vocalbulary = len(type_words)
+
+    def cond_prob(self, token, prev_tokens=None):
+        n = self.n
+        if not prev_tokens:
+            prev_tokens = []
+        assert len(prev_tokens) == n - 1
+
+        # |typeWords|
+        V = self.n_vocalbulary
+        tokens = prev_tokens + [token]
+
+        # add one. i.e. Adding 1 in numerator and V in denominator
+        count_prev_tokens = self.counts[tuple(prev_tokens)] + V
+        count_tokens = self.counts[tuple(tokens)] + 1
+        prob = float(count_tokens / count_prev_tokens)
+        return prob
+
+    def V(self):
+        """Size of the vocabulary.
+        """
+        return self.n_vocalbulary
