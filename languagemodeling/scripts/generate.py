@@ -11,40 +11,33 @@ Options:
 """
 
 from docopt import docopt
+import pickle
 
-from ngram import NGram, NGramGenerator
+from languagemodeling.ngram import NGram, NGramGenerator
 
-from nltk.corpus import PlaintextCorpusReader
-from nltk.tokenize import RegexpTokenizer
-
-DEFAULT_DIR = 'corpus'
+# need to create a output directory in scripts
+DEFAULT_OUTPUT_DIR = 'output'
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
 
     n = int(opts['-n'])
     filename = opts['-i']
-    # we want to tokenize the corpus filename
-    pattern = r'''(?ix)    # set flag to allow generate_sentverbose regexps
-            (?:sr\.|sra\.)
-            | (?:[A-Z]\.)+        # abbreviations, e.g. U.S.A.
-            | \w+(?:-\w+)*        # words with optional internal hyphens
-            | \$?\d+(?:\.\d+)?%?  # currency and percentages, e.g. $12.40, 82%
-            | \.\.\.            # ellipsis
-            | [][.,;"'?():-_`]
-            '''
-    tokenizer = RegexpTokenizer(pattern)
-    corpus = PlaintextCorpusReader(DEFAULT_DIR, filename, word_tokenizer=tokenizer)
-    tokens = corpus.sents()
 
     # the output will be written in test/output.txt
-    file_output = open('outputs/output.txt', 'w')
+    file_output = open(DEFAULT_OUTPUT_DIR + '/output.txt', 'w')
     for i in range(1, 5):
         # instance an n-gram object whith n={1,2,3,4}
-        # add a method instead init. how do I inicializate one time only?.
-        ngram = NGram(i, tokens)
+        # open the model to read
+        file_model = open(str(i) + '-gram.txt', 'rb')
+        # ngram is a model trained.
+        ngram = pickle.load(file_model)
+        # close the file
+        file_model.close()
+        # an instance of NGramGenerator with ngram
         generator = NGramGenerator(ngram)
-        file_output.write(str(i) + 'NGram')
+        # tittle i-Gram
+        file_output.write(str(i) + '-Gram')
         file_output.write('\r\n')
         # generate N sentences
         for _ in range(0, n):

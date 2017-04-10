@@ -14,9 +14,6 @@ Options:
   -o <file>     Output model file.
   -h --help     Show this screen.
 """
-
-DEFAULT_DIR = 'test'
-
 from docopt import docopt
 import pickle
 
@@ -25,9 +22,6 @@ from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
 import os
-# if I had not put, it wouldn't reconize languagemodeling
-import sys
-sys.path.append('../.')
 from languagemodeling.ngram import NGram, AddOneNGram
 
 DEFAULT_DIR = 'corpus'
@@ -62,7 +56,7 @@ if __name__ == '__main__':
 
     # save it
     filename = opts['-o']
-    f = open(os.path.join('output', filename), 'wb')
+    f = open(filename, 'wb')
     # to load a object pickle.load(file)
     pickle.dump(model, f)
     f.close()
