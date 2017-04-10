@@ -5,6 +5,7 @@ from math import log
 
 from random import random
 
+
 class NGram(object):
 
     def __init__(self, n, sents):
@@ -168,7 +169,7 @@ class AddOneNGram(NGram):
         # a list of type words
         type_words = []
         for token in tokens:
-            word = token[0]
+            word = token[n-1]
             # if word is new, it's a new type
             if word not in type_words:
                 type_words.append(word)
