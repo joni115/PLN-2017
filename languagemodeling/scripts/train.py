@@ -2,7 +2,7 @@
 Train an n-gram model.
 
 Usage:
-  train.py -n <n> [-m <model>] -i <file> --o <file>
+  train.py -n <n> [-m <model>] -i <file> -o <file>
   train.py -h | --help
 
 Options:
@@ -24,6 +24,7 @@ from nltk.corpus import gutenberg
 from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
+import os
 # if I had not put, it wouldn't reconize languagemodeling
 import sys
 sys.path.append('../.')
@@ -36,7 +37,6 @@ if __name__ == '__main__':
 
     corpus = opts['-i']
 
-    # load the data
     pattern = r'''(?ix)    # set flag to allow verbose regexps
             (?:sr\.|sra\.|mr\.|mrs\.)
             | (?:[A-Z]\.)+        # abbreviations, e.g. U.S.A.
@@ -62,6 +62,7 @@ if __name__ == '__main__':
 
     # save it
     filename = opts['-o']
-    f = open(filename, 'wb')
+    f = open(os.path.join('output', filename), 'wb')
+    # to load a object pickle.load(file)
     pickle.dump(model, f)
     f.close()

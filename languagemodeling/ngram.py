@@ -169,6 +169,7 @@ class AddOneNGram(NGram):
         type_words = []
         for token in tokens:
             word = token[0]
+            # if word is new, it's a new type
             if word not in type_words:
                 type_words.append(word)
 
