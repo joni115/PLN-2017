@@ -36,7 +36,8 @@ if __name__ == '__main__':
             | (?:[A-Z]\.)+        # abbreviations, e.g. U.S.A.
             | \w+(?:-\w+)*        # words with optional internal hyphens
             | \$?\d+(?:\.\d+)?%?  # currency and percentages, e.g. $12.40, 82%
-            | \.\.\.            # ellipsis
+            | \.\.\.              # ellipsis
+            | \w*[ñáéíóúÑÁÉÍÓÚ]\w* # special character for spanish
             | [][.,;"'?():-_`]
             '''
     tokenizer = RegexpTokenizer(pattern)
