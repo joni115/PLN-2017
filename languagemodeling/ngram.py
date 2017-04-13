@@ -16,18 +16,27 @@ class NGram(object):
         assert n > 0
         self.n = n
         self.counts = counts = defaultdict(int)
-        # to save only the (n-1)-gram tuple.
-        self.tokens = []
+        self.tokens = tokens = []
 
+        # to save type_tokens
+        type_token = set()
         for sent in sents:
             sent += ['</s>']
             sent = ['<s>'] * (n-1) + sent
+            # we want not repetitive tokens
+            type_token.update(set(sent))
             for i in range(len(sent) - n + 1):
                 ngram = tuple(sent[i: i + n])
                 counts[ngram] += 1
                 counts[ngram[:-1]] += 1
+                # for generate_sent. Save the n-uples tokens.
                 if len(ngram) == n:
-                    self.tokens += [ngram]
+                    tokens.append(ngram)
+
+        # dont save repetitive tokens
+        self.tokens = list(set(tokens))
+        # n_vocalbulary = |type_token - {<s>}|
+        self.n_vocalbulary = len(type_token - {'<s>'})
 
     def count(self, tokens):
         """Count for an n-gram or (n-1)-gram.
@@ -86,6 +95,26 @@ class NGram(object):
 
         return prob
 
+    # define the log_probability. It's usefull for a test_corpus.
+    # sents will be a list of test corpus' sentences.
+    def log_probability(self, sents):
+        log_prob = 0
+        for sent in sents:
+            log_prob += self.sent_log_prob(sent)
+
+        return log_prob
+
+    def cross_entropy(self, sents):
+        # M = |tokens|
+        M = len(sents)
+
+        log_prob = self.log_probability(sents)
+
+        return float(log_prob / M)
+
+    def perplexity(self, sents):
+        return pow(2, -self.cross_entropy(sents))
+
 class NGramGenerator:
 
     def __init__(self, model):
@@ -96,20 +125,20 @@ class NGramGenerator:
         self.probs = probs = defaultdict(dict)
         self.sorted_probs = sorted_probs = defaultdict()
 
-        list_tokens = self.model.tokens
+        tokens = self.model.tokens
         n = self.model.n
         cond_prob = self.model.cond_prob
 
-        for token in list_tokens:
+        for token in tokens:
             word = token[n-1]
             tokens = token[0:n-1]
             # conditional probability of word given the n-1 tokens
             prob_conditional = cond_prob(word, list(tokens))
             probs[tokens][word] = prob_conditional
-            # be carefull. ask about this!
-            # sorted_probs is for inverse transform sampling.
-            sorted_probs[tokens] = sorted(probs[tokens].items())
 
+        for token in probs.keys():
+            # sorted_probs is for inverse transform sampling.
+            sorted_probs[token] = sorted(probs[token].items())
 
     def generate_sent(self):
         """Randomly generate a sentence."""
@@ -127,11 +156,8 @@ class NGramGenerator:
             sent_list += [next_token]
             # we want the n-1 word for generate the next token
             prev_tokens = tuple(sent_list[len(sent_list)-n + 1:])
-
         # remove <s>s and </s> for test. return a list.
         return sent_list[n-1:len(sent_list) - 1]
-
-
 
     def generate_token(self, prev_tokens=None):
         """Randomly generate a token, given prev_tokens.
@@ -164,17 +190,6 @@ class AddOneNGram(NGram):
     """
     def __init__(self, n, sents):
         super().__init__(n, sents)
-        tokens = self.tokens
-
-        # a list of type words
-        type_words = []
-        for token in tokens:
-            word = token[n-1]
-            # if word is new, it's a new type
-            if word not in type_words:
-                type_words.append(word)
-
-        self.n_vocalbulary = len(type_words)
 
     def cond_prob(self, token, prev_tokens=None):
         n = self.n
