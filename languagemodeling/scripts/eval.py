@@ -7,7 +7,7 @@ Usage:
 
 Options:
   -i <file>     Language model file.
-  -c <file>    Input test corpus [default:].
+  -c <file>     Input test corpus [default:].
   -h --help     Show this screen.
 """
 from docopt import docopt
