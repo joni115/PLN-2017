@@ -112,10 +112,11 @@ class NGram(object):
 
     def cross_entropy(self, sents):
         # M = |tokens|
-        M = len(sents)
+        M = 0
+        for sent in sents:
+            M += len(sent)
 
         log_prob = self.log_probability(sents)
-
         return float(log_prob / M)
 
     def perplexity(self, sents):
