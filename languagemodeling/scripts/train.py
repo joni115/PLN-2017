@@ -2,7 +2,7 @@
 Train an n-gram model.
 
 Usage:
-  train.py -n <n> [-m <model>] -i <file> -o <file>
+  train.py -n <n> [-m <model>] [-i <file>] -o <file>
   train.py -h | --help
 
 Options:
@@ -10,18 +10,20 @@ Options:
   -m <model>    Model to use [default: ngram]:
                   ngram: Unsmoothed n-grams.
                   addone: N-grams with add-one smoothing.
-  -i <file>     Input corpus.
+  -i <file>     Input corpus [default:].
   -o <file>     Output model file.
   -h --help     Show this screen.
 """
 from docopt import docopt
 import pickle
 
-from nltk.corpus import gutenberg
+from nltk.data import load
+# from nltk.corpus import gutenberg
 from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
 import os
+
 from languagemodeling.ngram import NGram, AddOneNGram
 
 DEFAULT_DIR = 'corpus'
@@ -30,6 +32,8 @@ if __name__ == '__main__':
     opts = docopt(__doc__)
 
     corpus = opts['-i']
+    if not corpus:
+        corpus = 'corpus_GOT123_train.txt'
 
     pattern = r'''(?ix)    # set flag to allow verbose regexps
             (?:sr\.|sra\.|mr\.|mrs\.)
@@ -37,11 +41,15 @@ if __name__ == '__main__':
             | \w+(?:-\w+)*        # words with optional internal hyphens
             | \$?\d+(?:\.\d+)?%?  # currency and percentages, e.g. $12.40, 82%
             | \.\.\.              # ellipsis
-            | \w*[ñáéíóúÑÁÉÍÓÚ]\w* # special character for spanish
             | [][.,;"'?():-_`]
             '''
+
+    # for sent in spanish
+    sent_tokenizer = load('tokenizers/punkt/spanish.pickle')
     tokenizer = RegexpTokenizer(pattern)
-    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus, word_tokenizer=tokenizer)
+    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus, word_tokenizer=tokenizer,
+                                    sent_tokenizer=sent_tokenizer)
+    # sents will be a tokens' list of the corpus
     sents = corpus.sents()
 
     # train the model
@@ -49,8 +57,10 @@ if __name__ == '__main__':
     n = int(opts['-n'])
     if type_model == 'ngram':
         model = NGram(n, sents)
+        print (str(n) + '-gram will be ready')
     elif type_model == 'addone':
         model = AddOneNGram(n, sents)
+        print (str(n) + '-addone will be ready')
     else:
         print ('modelo erroneo')
         exit(0)
@@ -59,5 +69,6 @@ if __name__ == '__main__':
     filename = opts['-o']
     f = open(filename, 'wb')
     # to load a object pickle.load(file)
+    # dump save the object in bytes
     pickle.dump(model, f)
     f.close()
