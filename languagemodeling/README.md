@@ -42,3 +42,25 @@ Creamos el script generate.py donde carga un modelo y genera las oraciones. Debi
 
 #### CUATRIGRAMA
 > Más que Joffrey .Oh , no me deja en paz ?Ríete lo que quieras a que te salgan alas .Viserys estaba furioso .Cuando Harwin le quitó la corona y doblar la rodilla .
+
+Ejercicio 4
+-----------
+Está clase hereda NGram, ya que es prácticamente lo mismo salvo un métodos modificado y otro nuevo. Gracias a que en la clase NGram guardamos la cantidad de word_types la implementación de la clase es simple.
+
+- cond_probability: esté es un método sobre-escrito de NGram. La únca diferencia con cond_probability de NGram es que sumamos uno al numerador y V (cantidad de word types) al denominador.
+
+Además se agrego al script train.py la posibilidad de entrenar un modelo addOneGram para luego estudiar su comportamiento
+
+Ejercicio 5
+-----------
+Como había mencionado al principio, utilice los libros primero, segundo y tercero de games of thrones para entrenar el modelo y una parte del cuarto libro para testearlo. Luego se programó el script eval.py para evaluar un modelo sobre el conjunto de test, calculando la perplejidad. En este script agregue un argumento opcional para ingresar el corpus de test.
+Aquí esta el resultado:
+
+| n | n-gram |   Addone   |
+|:-:|:------:|:----------:|
+| 1 | inf    | 6.04x10^43 |
+| 2 | inf    | 5.02x10^48 |
+| 3 | inf    | 4.67x10^60 |
+| 4 | inf    | 1.4x10&64  |
+
+Claramente no era lo que esperaba. Son valores muy altos y addone ayudo muy poco contra eso. Es más vemos que addone en n con valores menores es mejor, es totalmente aburdo para el corpus.
