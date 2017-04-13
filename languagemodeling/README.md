@@ -58,9 +58,9 @@ Aquí esta el resultado:
 
 | n | n-gram |   Addone   |
 |:-:|:------:|:----------:|
-| 1 | inf    | 6.04x10^43 |
-| 2 | inf    | 5.02x10^48 |
-| 3 | inf    | 4.67x10^60 |
-| 4 | inf    | 1.4x10&64  |
+| 1 | inf    | 1270.49    |
+| 2 | inf    | 2846.63    |
+| 3 | inf    | 20012.06   |
+| 4 | inf    | 35313.75   |
 
-Claramente no era lo que esperaba. Son valores muy altos y addone ayudo muy poco contra eso. Es más vemos que addone en n con valores menores es mejor, es totalmente aburdo para el corpus.
+Claramente no era lo que esperaba. Son valores muy altos y addone ayudo bastante contra eso. Pero podemos ver que en n's más grandes la perplejidad baja... no es un comportamiento deseable.
