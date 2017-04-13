@@ -18,8 +18,6 @@ from nltk.data import load
 
 import pickle
 
-import os
-
 DEFAULT_DIR = 'corpus'
 
 if __name__ == '__main__':
@@ -43,8 +41,9 @@ if __name__ == '__main__':
     # for sent in spanish
     sent_tokenizer = load('tokenizers/punkt/spanish.pickle')
     tokenizer = RegexpTokenizer(pattern)
-    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus_test, word_tokenizer=tokenizer,
-                                    sent_tokenizer=sent_tokenizer)
+    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus_test,
+                                   word_tokenizer=tokenizer,
+                                   sent_tokenizer=sent_tokenizer)
     # sents will be a tokens' list of the corpus
     sents = corpus.sents()
 
@@ -55,4 +54,4 @@ if __name__ == '__main__':
     # wont use so it close.
     file_model.close()
 
-    print ('the perplexity is:', ngram.perplexity(sents))
+    print('the perplexity is:', ngram.perplexity(sents))

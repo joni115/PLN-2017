@@ -6,6 +6,11 @@ from math import log
 from random import random
 
 
+def log2(x):
+    # log2 domain extended. Domain = N U 0.
+    return (lambda x: log(x, 2) if x > 0 else float('-inf'))(x)
+
+
 class NGram(object):
 
     def __init__(self, n, sents):
@@ -72,9 +77,11 @@ class NGram(object):
 
         prob = 1
         for index_word in range(n - 1, len(sent)):
-            # the probability of P(word.index_word|word.index_word-1,..., word.(index_word - (n-1)))
+            # the probability of
+            # P(word.index_word,...,word.(index_word - (n-1)))
             # in a n-gram model.
-            prob *= self.cond_prob(sent[index_word], sent[index_word-n+1: index_word])
+            prob *= self.cond_prob(sent[index_word],
+                                   sent[index_word-n+1: index_word])
 
         return prob
 
@@ -83,15 +90,14 @@ class NGram(object):
         sent -- the sentence as a list of tokens.
         """
         n = self.n
-        # log2 domain extended. Domain = N U 0.
-        log2 = lambda x: log(x, 2) if x > 0 else float('-inf')
 
         sent += ['</s>']
         sent = ['<s>'] * (n-1) + sent
 
         prob = 0
         for index_word in range(n - 1, len(sent)):
-            prob += log2(self.cond_prob(sent[index_word], sent[index_word-n+1: index_word]))
+            prob += log2(self.cond_prob(sent[index_word],
+                         sent[index_word-n+1: index_word]))
 
         return prob
 
@@ -114,6 +120,7 @@ class NGram(object):
 
     def perplexity(self, sents):
         return pow(2, -self.cross_entropy(sents))
+
 
 class NGramGenerator:
 
@@ -182,6 +189,7 @@ class NGramGenerator:
             p += pi
 
         return next_token
+
 
 class AddOneNGram(NGram):
     """

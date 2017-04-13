@@ -22,8 +22,6 @@ from nltk.data import load
 from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
-import os
-
 from languagemodeling.ngram import NGram, AddOneNGram
 
 DEFAULT_DIR = 'corpus'
@@ -47,8 +45,9 @@ if __name__ == '__main__':
     # for sent in spanish
     sent_tokenizer = load('tokenizers/punkt/spanish.pickle')
     tokenizer = RegexpTokenizer(pattern)
-    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus, word_tokenizer=tokenizer,
-                                    sent_tokenizer=sent_tokenizer)
+    corpus = PlaintextCorpusReader(DEFAULT_DIR, corpus,
+                                   word_tokenizer=tokenizer,
+                                   sent_tokenizer=sent_tokenizer)
     # sents will be a tokens' list of the corpus
     sents = corpus.sents()
 
@@ -57,12 +56,12 @@ if __name__ == '__main__':
     n = int(opts['-n'])
     if type_model == 'ngram':
         model = NGram(n, sents)
-        print (str(n) + '-gram will be ready')
+        print(str(n) + '-gram will be ready')
     elif type_model == 'addone':
         model = AddOneNGram(n, sents)
-        print (str(n) + '-addone will be ready')
+        print(str(n) + '-addone will be ready')
     else:
-        print ('modelo erroneo')
+        print('modelo erroneo')
         exit(0)
 
     # save it

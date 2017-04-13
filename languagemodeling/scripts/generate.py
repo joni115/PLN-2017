@@ -13,7 +13,7 @@ Options:
 from docopt import docopt
 import pickle
 
-from languagemodeling.ngram import NGram, NGramGenerator
+from languagemodeling.ngram import NGramGenerator
 
 import os
 # need to create a output directory in scripts
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         file_model.close()
         # an instance of NGramGenerator with ngram
         generator = NGramGenerator(ngram)
-        print ('have just upload')
+        print('have just upload')
         for _ in range(0, n):
             list_sentence = generator.generate_sent()
             # join list with spaces between word
@@ -56,7 +56,7 @@ if __name__ == '__main__':
             # tittle i-Gram
             file_output.write(str(i) + '-Gram')
             file_output.write('\r\n')
-            print (str(i) + '-gram have just loaded')
+            print(str(i) + '-gram have just loaded')
             # generate N sentences
             for _ in range(0, n):
                 list_sentence = generator.generate_sent()
