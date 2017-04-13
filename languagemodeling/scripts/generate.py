@@ -45,7 +45,7 @@ if __name__ == '__main__':
         # put an EOL
         file_output.write('\r\n')
     else:
-        for i in range(1, 9):
+        for i in range(1, 5):
             # open the model to read n={1,2,3,4, 5, 6, 7, 8}
             file_model = open(str(i) + '-gram.txt', 'rb')
             # ngram is a model trained.

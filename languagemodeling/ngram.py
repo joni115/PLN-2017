@@ -137,6 +137,7 @@ class NGramGenerator:
         cond_prob = self.model.cond_prob
 
         for token in tokens:
+            # token is a n-tuple
             word = token[n-1]
             tokens = token[0:n-1]
             # conditional probability of word given the n-1 tokens
