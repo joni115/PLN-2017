@@ -241,12 +241,26 @@ class InterpolatedNGram(NGram):
             ngram = AddOneNGram(n, sents)
             self.counts = ngram.counts
         else:
+            if not gamma:
+                # the porcent of held-out. It's 90% of train data.
+                # put like this because of test.
+                porcent = int(0.9 * len(sents))
+                held_out = sents[porcent:]
+                sents = sents[:porcent]
+                self.gamma = self.get_gamma()
             for sent in sents:
+                # to evit underflow
                 sent += ['</s>']
                 sent = ['<s>'] * (n-1) + sent
                 for i in range(len(sent) - n + 1):
                     ngram = tuple(sent[i: i + n])
                     counts[ngram] += 1
+                    # all the n-uples where n = {1, 2, 3, ..., n}
+                    # i.e. if sents=['<s>' , 'hola', 'che', '</s>']
+                    # with n = 2
+                    # counts will be {(): 4, (hola,): 1, (che,):1, (</s>,):1,
+                    # ('<s>', 'hola'): 1, ('hola', 'che'): 1,
+                    # ('che', '</s>'): 1}
                     for j in range(1, n+1):
                         counts[ngram[j:]] += 1
 
@@ -256,23 +270,41 @@ class InterpolatedNGram(NGram):
             prev_tokens = []
         assert len(prev_tokens) == n - 1
 
+        # a list of gamma i.e. gamma = [gamma, gamma, gamma, gamma, 0].
+        # look for another solution
         gamma = [self.gamma for i in range(n - 1)]
         gamma.append(0)
 
+        # P(tokens| prev_tokens)
         tokens = prev_tokens + [token]
+        # lambas will be a list of lambda1, lambda2, ..., lambdan
         lambdas = []
         prob = 0
         for i in range(n):
+            # q_ML(token | prev_tokens) = count_token / count_prev_tokens.
+            # we want q_ML for n-grams n={1,2,3,..,n} i.e.
+            # q_ML(xn| xi...xn-1) that i={1, 2, 3,...,n-1}.
+            # example tokens = ['hola', 'que', 'haces'] which
+            # prev_tokens = ['que', 'haces'] so we want
+            # q_ML(hola | que haces), q_ML(hola | que) and q_ML(hola)
             count_token = self.count(tuple(tokens[i:]))
             count_prev_tokens = self.count(tuple(prev_tokens[i:]))
+            # if denominator is 0, q_ML(xn| xi...xn-1) will be 0.
             if count_prev_tokens:
+                # lambd  =
+                # (c(prev_tokens) / (c(prev_tokens) + gamma))*(1 - sum(lambd))
                 lambd = count_prev_tokens / float(count_prev_tokens + gamma[i])
                 lambd *= (1 - sum(lambdas))
+                assert (lambd >= 0 and lambd <= 1)
                 lambdas.append(lambd)
                 q_ML = count_token / float(count_prev_tokens)
                 prob += lambd * q_ML
 
+        # assert (sum(lambdas) == 1)
         return prob
+
+    def get_gamma(self):
+        pass
 # sents = [
 #     'el gato come pescado .'.split(),
 #     'la gata come salmón .'.split(),
