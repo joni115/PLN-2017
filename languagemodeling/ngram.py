@@ -221,3 +221,61 @@ class AddOneNGram(NGram):
         """Size of the vocabulary.
         """
         return self.n_vocalbulary
+
+class InterpolatedNGram(NGram):
+
+    def __init__(self, n, sents, gamma=None, addone=False):
+        """
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        gamma -- interpolation hyper-parameter (if not given, estimate using
+            held-out data).
+        addone -- whether to use addone smoothing (default: False).
+        """
+        assert n > 0
+        self.n = n
+        self.counts = counts = defaultdict(int)
+        self.gamma = gamma
+
+        if addone:
+            ngram = AddOneNGram(n, sents)
+            self.counts = ngram.counts
+        else:
+            for sent in sents:
+                sent += ['</s>']
+                sent = ['<s>'] * (n-1) + sent
+                for i in range(len(sent) - n + 1):
+                    ngram = tuple(sent[i: i + n])
+                    counts[ngram] += 1
+                    for j in range(1, n+1):
+                        counts[ngram[j:]] += 1
+
+    def cond_prob(self, token, prev_tokens=None):
+        n = self.n
+        if not prev_tokens:
+            prev_tokens = []
+        assert len(prev_tokens) == n - 1
+
+        gamma = [self.gamma for i in range(n - 1)]
+        gamma.append(0)
+
+        tokens = prev_tokens + [token]
+        lambdas = []
+        prob = 0
+        for i in range(n):
+            count_token = self.count(tuple(tokens[i:]))
+            count_prev_tokens = self.count(tuple(prev_tokens[i:]))
+            if count_prev_tokens:
+                lambd = count_prev_tokens / float(count_prev_tokens + gamma[i])
+                lambd *= (1 - sum(lambdas))
+                lambdas.append(lambd)
+                q_ML = count_token / float(count_prev_tokens)
+                prob += lambd * q_ML
+
+        return prob
+# sents = [
+#     'el gato come pescado .'.split(),
+#     'la gata come salmón .'.split(),
+# ]
+# ngram = InterpolatedNGram(1, sents, addone=False)
+# print (ngram.count)
