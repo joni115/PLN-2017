@@ -10,6 +10,7 @@ Options:
   -m <model>    Model to use [default: ngram]:
                   ngram: Unsmoothed n-grams.
                   addone: N-grams with add-one smoothing.
+                  interpolated: interpolated smoothing.
   -i <file>     Input corpus [default:].
   -o <file>     Output model file.
   -h --help     Show this screen.
@@ -22,7 +23,7 @@ from nltk.data import load
 from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
-from languagemodeling.ngram import NGram, AddOneNGram
+from languagemodeling.ngram import NGram, AddOneNGram, InterpolatedNGram
 
 DEFAULT_DIR = 'corpus'
 
@@ -60,6 +61,9 @@ if __name__ == '__main__':
     elif type_model == 'addone':
         model = AddOneNGram(n, sents)
         print(str(n) + '-addone will be ready')
+    elif type_model == 'interpolated':
+        model = InterpolatedNGram(n, sents)
+        print(str(n) + '-interpolated will be ready')
     else:
         print('modelo erroneo')
         exit(0)

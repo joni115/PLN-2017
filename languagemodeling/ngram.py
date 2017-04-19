@@ -302,7 +302,7 @@ class InterpolatedNGram(NGram):
             if self.addone and i == (n - 1):
                 count_token += 1
                 count_prev_tokens += self.n_vocalbulary
-            # if denominator is 0, q_ML(xn| xi...xn-1) will be 0.
+            # if denominator is 0, the probability of i-gram will be 0.
             if count_prev_tokens:
                 # lambd  =
                 # (c(prev_tokens) / (c(prev_tokens) + gamma))*(1 - sum(lambd))
@@ -316,7 +316,7 @@ class InterpolatedNGram(NGram):
         # assert (sum(lambdas) == 1)
         return prob
 
-    def get_gamma(self, sents, minim=0, maximun=2, jump=1):
+    def get_gamma(self, sents, minim=0, maximun=1000, jump = 10):
         best_gamma = minim
         best_log_prob = float('-inf')
         for gamma in range(minim, maximun, jump):
@@ -361,9 +361,3 @@ class BackOffNGram:
 
         tokens -- the k-gram tuple.
         """
-
-sents = [
-    'el gato come pescado .'.split(),
-    'la gata come salmón .'.split(),
-]
-interpolated = InterpolatedNGram(3, sents)
