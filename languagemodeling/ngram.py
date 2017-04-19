@@ -224,7 +224,7 @@ class AddOneNGram(NGram):
 
 class InterpolatedNGram(NGram):
 
-    def __init__(self, n, sents, gamma=None, addone=False):
+    def __init__(self, n, sents, gamma=None, addone=True):
         """
         n -- order of the model.
         sents -- list of sentences, each one being a list of tokens.
@@ -238,32 +238,36 @@ class InterpolatedNGram(NGram):
         self.gamma = gamma
 
         # for addone
-        self.ngram = None
+        self.addone = addone
 
-        if addone:
-            self.ngram = AddOneNGram(n, sents)
-        else:
-            if not gamma:
-                # the porcent of held-out. It's 90% of train data.
-                # put like this because of test.
-                porcent = int(0.9 * len(sents))
-                held_out = sents[porcent:]
-                sents = sents[:porcent]
-            for sent in sents:
-                # to evit underflow
-                sent += ['</s>']
-                sent = ['<s>'] * (n-1) + sent
-                for i in range(len(sent) - n + 1):
-                    ngram = tuple(sent[i: i + n])
-                    counts[ngram] += 1
-                    # all the n-uples where n = {1, 2, 3, ..., n}
-                    # i.e. if sents=['<s>' , 'hola', 'che', '</s>']
-                    # with n = 2
-                    # counts will be {(): 4, (hola,): 1, (che,):1, (</s>,):1,
-                    # ('<s>', 'hola'): 1, ('hola', 'che'): 1,
-                    # ('che', '</s>'): 1}
-                    for j in range(1, n+1):
-                        counts[ngram[j:]] += 1
+        if not gamma:
+            # the porcent of held-out. It's 90% of train data.
+            # put like this because of test.
+            porcent = int(0.9 * len(sents))
+            held_out = sents[porcent:]
+            sents = sents[:porcent]
+
+        # for type_tokens to count V
+        type_token = set()
+        for sent in sents:
+            # to evit underflow
+            sent += ['</s>']
+            sent = ['<s>'] * (n-1) + sent
+            type_token.update(set(sent))
+            for i in range(len(sent) - n + 1):
+                ngram = tuple(sent[i: i + n])
+                counts[ngram] += 1
+                # all the n-uples where n = {1, 2, 3, ..., n}
+                # i.e. if sents=['<s>' , 'hola', 'che', '</s>']
+                # with n = 2
+                # counts will be {(): 4, (hola,): 1, (che,):1, (</s>,):1,
+                # ('<s>', 'hola'): 1, ('hola', 'che'): 1,
+                # ('che', '</s>'): 1}
+                for j in range(1, n+1):
+                    counts[ngram[j:]] += 1
+
+            # n_vocalbulary = |type_token - {<s>}|
+            self.n_vocalbulary = len(type_token - {'<s>'})
 
             if not gamma:
                 # use "barrido" for get the gamma
@@ -274,9 +278,6 @@ class InterpolatedNGram(NGram):
         if not prev_tokens:
             prev_tokens = []
         assert len(prev_tokens) == n - 1
-        # if ngram is addone
-        if self.ngram:
-            return self.ngram.cond_prob(token, prev_tokens)
         # a list of gamma i.e. gamma = [gamma, gamma, gamma, gamma, 0].
         # look for another solution
         gamma = [self.gamma for i in range(n - 1)]
@@ -287,6 +288,7 @@ class InterpolatedNGram(NGram):
         # lambas will be a list of lambda1, lambda2, ..., lambdan
         lambdas = []
         prob = 0
+        # n-gram down to unigram
         for i in range(n):
             # q_ML(token | prev_tokens) = count_token / count_prev_tokens.
             # we want q_ML for n-grams n={1,2,3,..,n} i.e.
@@ -296,6 +298,10 @@ class InterpolatedNGram(NGram):
             # q_ML(hola | que haces), q_ML(hola | que) and q_ML(hola)
             count_token = self.count(tuple(tokens[i:]))
             count_prev_tokens = self.count(tuple(prev_tokens[i:]))
+            # if addone in unigrams.
+            if self.addone and i == (n - 1):
+                count_token += 1
+                count_prev_tokens += self.n_vocalbulary
             # if denominator is 0, q_ML(xn| xi...xn-1) will be 0.
             if count_prev_tokens:
                 # lambd  =
@@ -320,3 +326,44 @@ class InterpolatedNGram(NGram):
                 best_gamma = gamma
                 best_log_prob = log_prob_gamma
         self.gamma = best_gamma
+
+class BackOffNGram:
+
+    def __init__(self, n, sents, beta=None, addone=True):
+        """
+        Back-off NGram model with discounting as described by Michael Collins.
+
+        n -- order of the model.
+        sents -- list of sentences, each one being a list of tokens.
+        beta -- discounting hyper-parameter (if not given, estimate using
+            held-out data).
+        addone -- whether to use addone smoothing (default: True).
+        """
+
+    """
+       Todos los métodos de NGram.
+    """
+
+    def A(self, tokens):
+        """Set of words with counts > 0 for a k-gram with 0 < k < n.
+
+        tokens -- the k-gram tuple.
+        """
+
+    def alpha(self, tokens):
+        """Missing probability mass for a k-gram with 0 < k < n.
+
+        tokens -- the k-gram tuple.
+        """
+
+    def denom(self, tokens):
+        """Normalization factor for a k-gram with 0 < k < n.
+
+        tokens -- the k-gram tuple.
+        """
+
+sents = [
+    'el gato come pescado .'.split(),
+    'la gata come salmón .'.split(),
+]
+interpolated = InterpolatedNGram(3, sents)
