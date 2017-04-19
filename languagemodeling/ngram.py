@@ -237,9 +237,11 @@ class InterpolatedNGram(NGram):
         self.counts = counts = defaultdict(int)
         self.gamma = gamma
 
+        # for addone
+        self.ngram = None
+
         if addone:
-            ngram = AddOneNGram(n, sents)
-            self.counts = ngram.counts
+            self.ngram = AddOneNGram(n, sents)
         else:
             if not gamma:
                 # the porcent of held-out. It's 90% of train data.
@@ -247,7 +249,6 @@ class InterpolatedNGram(NGram):
                 porcent = int(0.9 * len(sents))
                 held_out = sents[porcent:]
                 sents = sents[:porcent]
-                self.gamma = self.get_gamma()
             for sent in sents:
                 # to evit underflow
                 sent += ['</s>']
@@ -264,12 +265,18 @@ class InterpolatedNGram(NGram):
                     for j in range(1, n+1):
                         counts[ngram[j:]] += 1
 
+            if not gamma:
+                # use "barrido" for get the gamma
+                self.get_gamma(held_out)
+
     def cond_prob(self, token, prev_tokens=None):
         n = self.n
         if not prev_tokens:
             prev_tokens = []
         assert len(prev_tokens) == n - 1
-
+        # if ngram is addone
+        if self.ngram:
+            return self.ngram.cond_prob(token, prev_tokens)
         # a list of gamma i.e. gamma = [gamma, gamma, gamma, gamma, 0].
         # look for another solution
         gamma = [self.gamma for i in range(n - 1)]
@@ -303,11 +310,13 @@ class InterpolatedNGram(NGram):
         # assert (sum(lambdas) == 1)
         return prob
 
-    def get_gamma(self):
-        pass
-# sents = [
-#     'el gato come pescado .'.split(),
-#     'la gata come salmón .'.split(),
-# ]
-# ngram = InterpolatedNGram(1, sents, addone=False)
-# print (ngram.count)
+    def get_gamma(self, sents, minim=0, maximun=2, jump=1):
+        best_gamma = minim
+        best_log_prob = float('-inf')
+        for gamma in range(minim, maximun, jump):
+            self.gamma = gamma
+            log_prob_gamma = self.log_probability(sents)
+            if best_log_prob < log_prob_gamma:
+                best_gamma = gamma
+                best_log_prob = log_prob_gamma
+        self.gamma = best_gamma
