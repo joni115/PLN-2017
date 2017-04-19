@@ -269,9 +269,9 @@ class InterpolatedNGram(NGram):
             # n_vocalbulary = |type_token - {<s>}|
             self.n_vocalbulary = len(type_token - {'<s>'})
 
-            if not gamma:
-                # use "barrido" for get the gamma
-                self.get_gamma(held_out)
+        if not gamma:
+            # use "barrido" for get the gamma
+            self.get_gamma(held_out)
 
     def cond_prob(self, token, prev_tokens=None):
         n = self.n
@@ -316,7 +316,7 @@ class InterpolatedNGram(NGram):
         # assert (sum(lambdas) == 1)
         return prob
 
-    def get_gamma(self, sents, minim=0, maximun=1000, jump = 10):
+    def get_gamma(self, sents, minim=0, maximun=1000, jump = 100):
         best_gamma = minim
         best_log_prob = float('-inf')
         for gamma in range(minim, maximun, jump):
@@ -326,6 +326,7 @@ class InterpolatedNGram(NGram):
                 best_gamma = gamma
                 best_log_prob = log_prob_gamma
         self.gamma = best_gamma
+        print('best gamma was:', self.gamma)
 
 class BackOffNGram:
 
