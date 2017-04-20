@@ -346,16 +346,57 @@ class BackOffNGram(NGram):
             held-out data).
         addone -- whether to use addone smoothing (default: True).
         """
+        assert n > 0
+        self.n = n
+        self.counts = counts = defaultdict(int)
+        # for set A
+        self.Aset = Aset = defaultdict(set)
+        self.beta = beta
 
-    """
-       Todos los métodos de NGram.
-    """
+        # for addone
+        self.addone = addone
+
+        if not beta:
+            # the porcent of held-out. It's 90% of train data.
+            # last 10% for held_out because of test.
+            porcent = int(0.9 * len(sents))
+            held_out = sents[porcent:]
+            sents = sents[:porcent]
+
+        # for type_tokens to count V
+        type_token = set()
+        for sent in sents:
+            # to evit underflow
+            sent += ['</s>']
+            sent = ['<s>'] * (n-1) + sent
+            type_token.update(set(sent))
+            for i in range(len(sent) - n + 1):
+                ngram = tuple(sent[i: i + n])
+                counts[ngram] += 1
+                # bigram: Aset(v) = {w | c(ngram) > 0}.
+                # trigram: Aset(ngram[:-1]) = {w | c(ngram[:-1]) > 0}.
+                Aset[ngram[:-1]].add(ngram[-1])
+                # all the n-uples where n = {1, 2, 3, ..., n}
+                # i.e. if sents=['<s>' , 'hola', 'che', '</s>']
+                # with n = 2
+                # counts will be {(): 4, (hola,): 1, (che,):1, (</s>,):1,
+                # ('<s>', 'hola'): 1, ('hola', 'che'): 1,
+                # ('che', '</s>'): 1}
+                for j in range(1, n+1):
+                    counts[ngram[j:]] += 1
+
+        # n_vocalbulary = |type_token - {<s>}|
+        self.n_vocalbulary = len(type_token - {'<s>'})
+
+        if not beta:
+            # use "barrido" for get the gamma
+            self.get_beta(held_out)
 
     def A(self, tokens):
         """Set of words with counts > 0 for a k-gram with 0 < k < n.
-
         tokens -- the k-gram tuple.
         """
+        return self.Aset[tokens]
 
     def alpha(self, tokens):
         """Missing probability mass for a k-gram with 0 < k < n.
@@ -368,3 +409,6 @@ class BackOffNGram(NGram):
 
         tokens -- the k-gram tuple.
         """
+
+    def get_beta(self, sents):
+        pass
