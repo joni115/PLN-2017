@@ -242,7 +242,7 @@ class InterpolatedNGram(NGram):
 
         if not gamma:
             # the porcent of held-out. It's 90% of train data.
-            # put like this because of test.
+            # last 10% for held_out because of test.
             porcent = int(0.9 * len(sents))
             held_out = sents[porcent:]
             sents = sents[:porcent]
@@ -266,8 +266,8 @@ class InterpolatedNGram(NGram):
                 for j in range(1, n+1):
                     counts[ngram[j:]] += 1
 
-            # n_vocalbulary = |type_token - {<s>}|
-            self.n_vocalbulary = len(type_token - {'<s>'})
+        # n_vocalbulary = |type_token - {<s>}|
+        self.n_vocalbulary = len(type_token - {'<s>'})
 
         if not gamma:
             # use "barrido" for get the gamma
@@ -288,7 +288,7 @@ class InterpolatedNGram(NGram):
         # lambas will be a list of lambda1, lambda2, ..., lambdan
         lambdas = []
         prob = 0
-        # n-gram down to unigram
+        # calculate q_ML from n-gram down to unigram
         for i in range(n):
             # q_ML(token | prev_tokens) = count_token / count_prev_tokens.
             # we want q_ML for n-grams n={1,2,3,..,n} i.e.
@@ -308,19 +308,25 @@ class InterpolatedNGram(NGram):
                 # (c(prev_tokens) / (c(prev_tokens) + gamma))*(1 - sum(lambd))
                 lambd = count_prev_tokens / float(count_prev_tokens + gamma[i])
                 lambd *= (1 - sum(lambdas))
+                # lambdas must be between 0 and 1.
                 assert (lambd >= 0 and lambd <= 1)
                 lambdas.append(lambd)
                 q_ML = count_token / float(count_prev_tokens)
                 prob += lambd * q_ML
 
-        # assert (sum(lambdas) == 1)
+        assert (sum(lambdas) == 1 or not self.addone)
         return prob
 
     def get_gamma(self, sents, minim=0, maximun=1000, jump = 100):
+        # to save best gamma
         best_gamma = minim
         best_log_prob = float('-inf')
+        # 'barrer' from minim to maximun with jump
         for gamma in range(minim, maximun, jump):
+            # to get the log_probability with this gamma.
             self.gamma = gamma
+            # to get the 'best gamma' is better use log_probability than
+            # cross_entropy or perplexity because of operation's number.
             log_prob_gamma = self.log_probability(sents)
             if best_log_prob < log_prob_gamma:
                 best_gamma = gamma
@@ -328,7 +334,7 @@ class InterpolatedNGram(NGram):
         self.gamma = best_gamma
         print('best gamma was:', self.gamma)
 
-class BackOffNGram:
+class BackOffNGram(NGram):
 
     def __init__(self, n, sents, beta=None, addone=True):
         """
