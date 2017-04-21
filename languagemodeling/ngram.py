@@ -283,6 +283,8 @@ class InterpolatedNGram(NGram):
         gamma = [self.gamma for i in range(n - 1)]
         gamma.append(0)
 
+        # |type_vocabulary|
+        V = self.n_vocalbulary
         # P(tokens| prev_tokens)
         tokens = prev_tokens + [token]
         # lambas will be a list of lambda1, lambda2, ..., lambdan
@@ -347,7 +349,9 @@ class BackOffNGram(NGram):
         addone -- whether to use addone smoothing (default: True).
         """
         assert n > 0
+        assert not beta or (0 <= beta <= 1)
         self.n = n
+        # for the counts
         self.counts = counts = defaultdict(int)
         # for set A
         self.Aset = Aset = defaultdict(set)
@@ -356,19 +360,23 @@ class BackOffNGram(NGram):
         # for addone
         self.addone = addone
 
+        # a copy of sents because of test.
+        copy_sents = list(sents)
         if not beta:
             # the porcent of held-out. It's 90% of train data.
             # last 10% for held_out because of test.
-            porcent = int(0.9 * len(sents))
-            held_out = sents[porcent:]
-            sents = sents[:porcent]
+            porcent = int(0.9 * len(copy_sents))
+            held_out = copy_sents[porcent:]
+            copy_sents = copy_sents[:porcent]
 
         # for type_tokens to count V
         type_token = set()
-        for sent in sents:
+        for sent in copy_sents:
             # to evit underflow
             sent += ['</s>']
             sent = ['<s>'] * (n-1) + sent
+            # for save the count of <s>.
+            counts[tuple(['<s>'])] += n-1
             type_token.update(set(sent))
             for i in range(len(sent) - n + 1):
                 ngram = tuple(sent[i: i + n])
@@ -382,6 +390,9 @@ class BackOffNGram(NGram):
                 # counts will be {(): 4, (hola,): 1, (che,):1, (</s>,):1,
                 # ('<s>', 'hola'): 1, ('hola', 'che'): 1,
                 # ('che', '</s>'): 1}
+                for j in range(1, n - 1):
+                    # Aset for all the models.
+                    Aset[ngram[j:][:-1]].add(ngram[j:][-1])
                 for j in range(1, n+1):
                     counts[ngram[j:]] += 1
 
@@ -390,7 +401,36 @@ class BackOffNGram(NGram):
 
         if not beta:
             # use "barrido" for get the gamma
+            # this method get the denominator and alpha
             self.get_beta(held_out)
+        else:
+            # to get alphas
+            self._get_alphas()
+            # to get denominator
+            self._get_denominator()
+
+
+    def _get_alphas(self):
+        self.alphas = alphas = defaultdict(float)
+        beta = self.beta
+        for tokens in self.Aset.keys():
+            alpha = 1
+
+            # |Aset(tokens)|
+            len_Aset = len(self.A(tokens))
+            # if A != empty
+            if len_Aset:
+                alpha = beta * len_Aset / self.count(tokens)
+
+            alphas[tokens] = alpha
+
+    def _get_denominator(self):
+        self.denominator = defaultdict(float)
+        for tokens in self.Aset.keys():
+            # to get denominator of tokens.
+            sumatory = sum(self.cond_prob(x, tokens[1:]) for x in self.A(tokens))
+            self.denominator[tokens] = 1 - sumatory
+            assert 0 <= sumatory <= 1
 
     def A(self, tokens):
         """Set of words with counts > 0 for a k-gram with 0 < k < n.
@@ -400,15 +440,55 @@ class BackOffNGram(NGram):
 
     def alpha(self, tokens):
         """Missing probability mass for a k-gram with 0 < k < n.
-
         tokens -- the k-gram tuple.
         """
+        beta = self.beta
+        len_A = len(self.Aset[tokens])
+        alpha = 1
+        if len_A:
+            alpha = beta * len_A / float(self.count(tokens))
+        return alpha
 
     def denom(self, tokens):
         """Normalization factor for a k-gram with 0 < k < n.
-
         tokens -- the k-gram tuple.
         """
+        return self.denominator[tokens]
 
-    def get_beta(self, sents):
+    def cond_prob(self, token, prev_tokens=None):
+        n = self.n
+        beta = self.beta
+        if not prev_tokens:
+            prev_tokens = []
+        # P(tokens| prev_tokens)
+        tokens = prev_tokens + [token]
+        # token in A(previous_token)
+        prev_tokens_tuple = tuple(prev_tokens)
+        set_of_token = self.A(prev_tokens_tuple)
+        token_tuple = tuple(token)
+        probability = 0
+        if len(prev_tokens) == 0:
+            numerator = self.count(token_tuple)
+            denominator = self.count(tuple())
+            if self.addone:
+                numerator += 1
+                denominator += self.n_vocalbulary
+
+            probability = numerator / float(denominator)
+            return probability
+        if token in set_of_token:
+            numerator = self.count(tuple(tokens)) - beta
+            denominator = self.count(prev_tokens_tuple)
+            if denominator:
+                probability = numerator / float(denominator)
+            return probability
+        else:
+            numerator = self.alpha(prev_tokens_tuple) * self.cond_prob(token, prev_tokens[1:])
+            denominator = self.denom(prev_tokens_tuple)
+            if denominator:
+                probability = numerator / float(denominator)
+            return (probability)
+
+
+    def get_beta(eself, sents):
         pass
