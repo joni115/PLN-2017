@@ -3,6 +3,8 @@ from collections import defaultdict
 
 from math import log
 
+import numpy as np
+
 from random import random
 
 
@@ -234,11 +236,11 @@ class InterpolatedNGram(NGram):
         """
         assert n > 0
         self.n = n
-        self.counts = counts = defaultdict(int)
         self.gamma = gamma
-
         # for addone
         self.addone = addone
+
+        self.counts = counts = defaultdict(int)
 
         if not gamma:
             # the porcent of held-out. It's 90% of train data.
@@ -333,6 +335,7 @@ class InterpolatedNGram(NGram):
             if best_log_prob < log_prob_gamma:
                 best_gamma = gamma
                 best_log_prob = log_prob_gamma
+            print(gamma, ' |-> ', log_probability)
         self.gamma = best_gamma
         print('best gamma was:', self.gamma)
 
@@ -351,21 +354,22 @@ class BackOffNGram(NGram):
         assert n > 0
         assert not beta or (0 <= beta <= 1)
         self.n = n
+        # for beta
+        self.beta = beta
         # for the counts
         self.counts = counts = defaultdict(int)
         # for set A
         self.Aset = Aset = defaultdict(set)
-        self.beta = beta
 
         # for addone
         self.addone = addone
 
-        # a copy of sents because of test.
         copy_sents = list(sents)
+        # a copy of sents because of test.
         if not beta:
             # the porcent of held-out. It's 90% of train data.
             # last 10% for held_out because of test.
-            porcent = int(0.9 * len(copy_sents))
+            porcent = int(0.9 * len(sents))
             held_out = copy_sents[porcent:]
             copy_sents = copy_sents[:porcent]
 
@@ -373,13 +377,14 @@ class BackOffNGram(NGram):
         type_token = set()
         for sent in copy_sents:
             # to evit underflow
-            sent += ['</s>']
-            sent = ['<s>'] * (n-1) + sent
+            # have to do a copy of sent because the tests.
+            copy_sent = ['<s>'] * (n-1) + list(sent) + ['</s>']
             # for save the count of <s>.
-            counts[tuple(['<s>'])] += n-1
-            type_token.update(set(sent))
-            for i in range(len(sent) - n + 1):
-                ngram = tuple(sent[i: i + n])
+            for i in range(1, n):
+                counts[tuple(['<s>'] * i)] += n - i
+            type_token.update(set(copy_sent))
+            for i in range(len(copy_sent) - n + 1):
+                ngram = tuple(copy_sent[i: i + n])
                 counts[ngram] += 1
                 # bigram: Aset(v) = {w | c(ngram) > 0}.
                 # trigram: Aset(ngram[:-1]) = {w | c(ngram[:-1]) > 0}.
@@ -400,35 +405,52 @@ class BackOffNGram(NGram):
         self.n_vocalbulary = len(type_token - {'<s>'})
 
         if not beta:
-            # use "barrido" for get the gamma
-            # this method get the denominator and alpha
-            self.get_beta(held_out)
+            # this method get denominator and alpha
+            # use "barrido" for get beta
+            self._get_beta(held_out)
         else:
             # to get alphas
             self._get_alphas()
             # to get denominator
             self._get_denominator()
 
+    def _get_beta(self, sents):
+        # to choose best log probability and beta
+        best_log_prob = float('-inf')
+        best_beta = 0
+        # for use barrido in betta = [0.0, 0.05, 0.1, 0.15, ....., 1.0]
+        for beta in np.arange(0.0, 1.05, 0.05):
+            self.beta = beta
+            self._get_alphas()
+            self._get_denominator()
+
+            log_probability = self.log_probability(sents)
+
+            if best_log_prob < log_probability:
+                best_log_prob = log_probability
+                best_beta = self.beta
+
+            # print(beta, ' |-> ', log_probability)
+
+        self.beta = best_beta
 
     def _get_alphas(self):
         self.alphas = alphas = defaultdict(float)
         beta = self.beta
         for tokens in self.Aset.keys():
             alpha = 1
-
             # |Aset(tokens)|
             len_Aset = len(self.A(tokens))
             # if A != empty
             if len_Aset:
                 alpha = beta * len_Aset / self.count(tokens)
-
             alphas[tokens] = alpha
 
     def _get_denominator(self):
         self.denominator = defaultdict(float)
         for tokens in self.Aset.keys():
             # to get denominator of tokens.
-            sumatory = sum(self.cond_prob(x, tokens[1:]) for x in self.A(tokens))
+            sumatory = sum(self.cond_prob(x, list(tokens[1:])) for x in self.A(tokens))
             self.denominator[tokens] = 1 - sumatory
             assert 0 <= sumatory <= 1
 
@@ -442,18 +464,13 @@ class BackOffNGram(NGram):
         """Missing probability mass for a k-gram with 0 < k < n.
         tokens -- the k-gram tuple.
         """
-        beta = self.beta
-        len_A = len(self.Aset[tokens])
-        alpha = 1
-        if len_A:
-            alpha = beta * len_A / float(self.count(tokens))
-        return alpha
+        return self.alphas[tokens]
 
     def denom(self, tokens):
         """Normalization factor for a k-gram with 0 < k < n.
         tokens -- the k-gram tuple.
         """
-        return self.denominator[tokens]
+        return self.denominator.get(tokens)
 
     def cond_prob(self, token, prev_tokens=None):
         n = self.n
@@ -463,12 +480,10 @@ class BackOffNGram(NGram):
         # P(tokens| prev_tokens)
         tokens = prev_tokens + [token]
         # token in A(previous_token)
-        prev_tokens_tuple = tuple(prev_tokens)
-        set_of_token = self.A(prev_tokens_tuple)
-        token_tuple = tuple(token)
         probability = 0
+        # get the probability of q_D(token_tuple) with or without addone.
         if len(prev_tokens) == 0:
-            numerator = self.count(token_tuple)
+            numerator = self.count(tuple([token]))
             denominator = self.count(tuple())
             if self.addone:
                 numerator += 1
@@ -476,19 +491,18 @@ class BackOffNGram(NGram):
 
             probability = numerator / float(denominator)
             return probability
+        set_of_token = self.A(tuple(prev_tokens))
+        # if token in set A(prev_tokens).
         if token in set_of_token:
             numerator = self.count(tuple(tokens)) - beta
-            denominator = self.count(prev_tokens_tuple)
+            denominator = self.count(tuple(prev_tokens))
             if denominator:
                 probability = numerator / float(denominator)
             return probability
+        # if token in set B(prev_tokens).
         else:
-            numerator = self.alpha(prev_tokens_tuple) * self.cond_prob(token, prev_tokens[1:])
-            denominator = self.denom(prev_tokens_tuple)
+            numerator = self.alpha(tuple(prev_tokens)) * self.cond_prob(token, prev_tokens[1:])
+            denominator = self.denom(tuple(prev_tokens))
             if denominator:
                 probability = numerator / float(denominator)
-            return (probability)
-
-
-    def get_beta(eself, sents):
-        pass
+            return probability
