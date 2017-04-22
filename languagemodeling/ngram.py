@@ -242,7 +242,7 @@ class InterpolatedNGram(NGram):
 
         self.counts = counts = defaultdict(int)
 
-        if not gamma:
+        if gamma == None:
             # the porcent of held-out. It's 90% of train data.
             # last 10% for held_out because of test.
             porcent = int(0.9 * len(sents))
@@ -271,7 +271,7 @@ class InterpolatedNGram(NGram):
         # n_vocalbulary = |type_token - {<s>}|
         self.n_vocalbulary = len(type_token - {'<s>'})
 
-        if not gamma:
+        if gamma == None:
             # use "barrido" for get the gamma
             self.get_gamma(held_out)
 
@@ -335,7 +335,7 @@ class InterpolatedNGram(NGram):
             if best_log_prob < log_prob_gamma:
                 best_gamma = gamma
                 best_log_prob = log_prob_gamma
-            print(gamma, ' |-> ', log_probability)
+            print(gamma, ' |-> ', log_prob_gamma)
         self.gamma = best_gamma
         print('best gamma was:', self.gamma)
 
@@ -366,7 +366,7 @@ class BackOffNGram(NGram):
 
         copy_sents = list(sents)
         # a copy of sents because of test.
-        if not beta:
+        if beta == None:
             # the porcent of held-out. It's 90% of train data.
             # last 10% for held_out because of test.
             porcent = int(0.9 * len(sents))
@@ -404,7 +404,7 @@ class BackOffNGram(NGram):
         # n_vocalbulary = |type_token - {<s>}|
         self.n_vocalbulary = len(type_token - {'<s>'})
 
-        if not beta:
+        if beta == None:
             # this method get denominator and alpha
             # use "barrido" for get beta
             self._get_beta(held_out)
@@ -483,7 +483,7 @@ class BackOffNGram(NGram):
         probability = 0
         # get the probability of q_D(token_tuple) with or without addone.
         if len(prev_tokens) == 0:
-            numerator = self.count(tuple([token]))
+            numerator = self.count(tuple((token,)))
             denominator = self.count(tuple())
             if self.addone:
                 numerator += 1
