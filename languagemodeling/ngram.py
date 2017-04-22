@@ -224,6 +224,7 @@ class AddOneNGram(NGram):
         """
         return self.n_vocalbulary
 
+
 class InterpolatedNGram(NGram):
 
     def __init__(self, n, sents, gamma=None, addone=True):
@@ -242,7 +243,7 @@ class InterpolatedNGram(NGram):
 
         self.counts = counts = defaultdict(int)
 
-        if gamma == None:
+        if gamma is None:
             # the porcent of held-out. It's 90% of train data.
             # last 10% for held_out because of test.
             porcent = int(0.9 * len(sents))
@@ -255,6 +256,8 @@ class InterpolatedNGram(NGram):
             # to evit underflow
             sent += ['</s>']
             sent = ['<s>'] * (n-1) + sent
+            for i in range(1, n):
+                counts[tuple(['<s>'] * i)] += n - i
             type_token.update(set(sent))
             for i in range(len(sent) - n + 1):
                 ngram = tuple(sent[i: i + n])
@@ -271,7 +274,7 @@ class InterpolatedNGram(NGram):
         # n_vocalbulary = |type_token - {<s>}|
         self.n_vocalbulary = len(type_token - {'<s>'})
 
-        if gamma == None:
+        if gamma is None:
             # use "barrido" for get the gamma
             self.get_gamma(held_out)
 
@@ -305,7 +308,7 @@ class InterpolatedNGram(NGram):
             # if addone in unigrams.
             if self.addone and i == (n - 1):
                 count_token += 1
-                count_prev_tokens += self.n_vocalbulary
+                count_prev_tokens += V
             # if denominator is 0, the probability of i-gram will be 0.
             if count_prev_tokens:
                 # lambd  =
@@ -321,7 +324,7 @@ class InterpolatedNGram(NGram):
         assert (sum(lambdas) == 1 or not self.addone)
         return prob
 
-    def get_gamma(self, sents, minim=0, maximun=1000, jump = 100):
+    def get_gamma(self, sents, minim=0, maximun=200, jump=10):
         # to save best gamma
         best_gamma = minim
         best_log_prob = float('-inf')
@@ -338,6 +341,7 @@ class InterpolatedNGram(NGram):
             print(gamma, ' |-> ', log_prob_gamma)
         self.gamma = best_gamma
         print('best gamma was:', self.gamma)
+
 
 class BackOffNGram(NGram):
 
@@ -366,7 +370,7 @@ class BackOffNGram(NGram):
 
         copy_sents = list(sents)
         # a copy of sents because of test.
-        if beta == None:
+        if beta is None:
             # the porcent of held-out. It's 90% of train data.
             # last 10% for held_out because of test.
             porcent = int(0.9 * len(sents))
@@ -404,7 +408,7 @@ class BackOffNGram(NGram):
         # n_vocalbulary = |type_token - {<s>}|
         self.n_vocalbulary = len(type_token - {'<s>'})
 
-        if beta == None:
+        if beta is None:
             # this method get denominator and alpha
             # use "barrido" for get beta
             self._get_beta(held_out)
@@ -430,9 +434,10 @@ class BackOffNGram(NGram):
                 best_log_prob = log_probability
                 best_beta = self.beta
 
-            # print(beta, ' |-> ', log_probability)
+            print(beta, ' |-> ', log_probability)
 
         self.beta = best_beta
+        print('best beta was: ', best_beta)
 
     def _get_alphas(self):
         self.alphas = alphas = defaultdict(float)
@@ -450,9 +455,9 @@ class BackOffNGram(NGram):
         self.denominator = defaultdict(float)
         for tokens in self.Aset.keys():
             # to get denominator of tokens.
-            sumatory = sum(self.cond_prob(x, list(tokens[1:])) for x in self.A(tokens))
+            sumatory = sum(self.cond_prob(x,
+                           list(tokens[1:])) for x in self.A(tokens))
             self.denominator[tokens] = 1 - sumatory
-            assert 0 <= sumatory <= 1
 
     def A(self, tokens):
         """Set of words with counts > 0 for a k-gram with 0 < k < n.
@@ -464,16 +469,15 @@ class BackOffNGram(NGram):
         """Missing probability mass for a k-gram with 0 < k < n.
         tokens -- the k-gram tuple.
         """
-        return self.alphas[tokens]
+        return self.alphas.get(tokens, 1.0)
 
     def denom(self, tokens):
         """Normalization factor for a k-gram with 0 < k < n.
         tokens -- the k-gram tuple.
         """
-        return self.denominator.get(tokens)
+        return self.denominator.get(tokens, 1.0)
 
     def cond_prob(self, token, prev_tokens=None):
-        n = self.n
         beta = self.beta
         if not prev_tokens:
             prev_tokens = []
@@ -483,7 +487,7 @@ class BackOffNGram(NGram):
         probability = 0
         # get the probability of q_D(token_tuple) with or without addone.
         if len(prev_tokens) == 0:
-            numerator = self.count(tuple((token,)))
+            numerator = self.count((token,))
             denominator = self.count(tuple())
             if self.addone:
                 numerator += 1
@@ -501,7 +505,8 @@ class BackOffNGram(NGram):
             return probability
         # if token in set B(prev_tokens).
         else:
-            numerator = self.alpha(tuple(prev_tokens)) * self.cond_prob(token, prev_tokens[1:])
+            alph = self.alpha(tuple(prev_tokens))
+            numerator = alph * self.cond_prob(token, prev_tokens[1:])
             denominator = self.denom(tuple(prev_tokens))
             if denominator:
                 probability = numerator / float(denominator)

@@ -11,6 +11,7 @@ Options:
                   ngram: Unsmoothed n-grams.
                   addone: N-grams with add-one smoothing.
                   interpolated: interpolated smoothing.
+                  backoff: backoff smoothing.
   -i <file>     Input corpus [default:].
   -o <file>     Output model file.
   -h --help     Show this screen.
@@ -24,6 +25,7 @@ from nltk.corpus import PlaintextCorpusReader
 from nltk.tokenize import RegexpTokenizer
 
 from languagemodeling.ngram import NGram, AddOneNGram, InterpolatedNGram
+from languagemodeling.ngram import BackOffNGram
 
 DEFAULT_DIR = 'corpus'
 
@@ -64,6 +66,9 @@ if __name__ == '__main__':
     elif type_model == 'interpolated':
         model = InterpolatedNGram(n, sents)
         print(str(n) + '-interpolated will be ready')
+    elif type_model == 'backoff':
+        model = BackOffNGram(n, sents)
+        print(str(n) + '-backoff will be ready')
     else:
         print('modelo erroneo')
         exit(0)

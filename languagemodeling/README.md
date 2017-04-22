@@ -64,3 +64,24 @@ Aquí esta el resultado:
 | 4 | inf    | 35313.75   |
 
 Claramente no era lo que esperaba. Son valores muy altos y addone ayudo bastante contra eso. Pero podemos ver que en n's más grandes la perplejidad baja... no es un comportamiento deseable.
+
+Ejercicio 6
+----------
+En este ejercicio implementamos el smoothing interpolated. Para ello re-implementamos el método __init__ en el cual hacemos un diccionario "counts" general para todos los modelos i.e. si queremos un interpolated con n=4 el counts contendra el count de todos los n-grama para n={1, 2, 3, 4}. Al igual que el addone pre-calculamos el número de tipos de palabras.
+Para hacer el cond_prob me guíe por los apuntes dados en clases. Utilice una forma iterativa de hacerlo.
+El barrido de gamma lo hice con un rango de 0 a 200 saltando de 10 debido a que se adecua más a mi corpus.
+
+Ejercicio7
+---------
+En este ejercicio implementamos el smoothing backoff con discounting. Para ello utlizamos una implementación del __init__ muy parecida al del ejercicio anterior. Sin embargo, en está implementación pre-calcumos el conjunto A, el denominador de cada conjunto de token y el alpha, para luego hacer más eficientes los calculos.
+Para hacer el barrido de beta utilizamos un rango de 0 a 1 con saltos de 0.05 debido a que quería exactitud.
+En cond_prob me guíe por los apuntes dados en clases. Utilice una forma recursiva de hacer el método.
+
+Resultados finales
+------------------
+| n | n-gram |   Addone   | Interpolated |  Backoff |
+|:-:|:------:|:----------:|:-----------: |:--------:|
+| 1 | inf    | 1270.49    | 1281.652     | 1281.652 |
+| 2 | inf    | 2846.63    | 341.438636   | 204.1986 |
+| 3 | inf    | 20012.06   | 328.8728     | 144.6048 |
+| 4 | inf    | 35313.75   | 436.773      | 137.7395 |
