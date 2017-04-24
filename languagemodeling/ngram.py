@@ -92,14 +92,14 @@ class NGram(object):
         sent -- the sentence as a list of tokens.
         """
         n = self.n
+        copy_sent = list(sent)
 
-        sent += ['</s>']
-        sent = ['<s>'] * (n-1) + sent
-
+        copy_sent += ['</s>']
+        copy_sent = ['<s>'] * (n - 1) + copy_sent
         prob = 0
-        for index_word in range(n - 1, len(sent)):
-            prob += log2(self.cond_prob(sent[index_word],
-                         sent[index_word-n+1: index_word]))
+        for index_word in range(n - 1, len(copy_sent)):
+            prob += log2(self.cond_prob(copy_sent[index_word],
+                         copy_sent[index_word-n+1: index_word]))
 
         return prob
 
@@ -273,7 +273,6 @@ class InterpolatedNGram(NGram):
 
         # n_vocalbulary = |type_token - {<s>}|
         self.n_vocalbulary = len(type_token - {'<s>'})
-
         if gamma is None:
             # use "barrido" for get the gamma
             self.get_gamma(held_out)
@@ -324,7 +323,7 @@ class InterpolatedNGram(NGram):
         assert (sum(lambdas) == 1 or not self.addone)
         return prob
 
-    def get_gamma(self, sents, minim=0, maximun=200, jump=10):
+    def get_gamma(self, sents, minim=0, maximun=250, jump=10):
         # to save best gamma
         best_gamma = minim
         best_log_prob = float('-inf')
@@ -422,14 +421,13 @@ class BackOffNGram(NGram):
         # to choose best log probability and beta
         best_log_prob = float('-inf')
         best_beta = 0
-        # for use barrido in betta = [0.0, 0.05, 0.1, 0.15, ....., 1.0]
-        for beta in np.arange(0.0, 1.05, 0.05):
+        # for use barrido in betta = [0.05, 0.05, 0.1, 0.15, ....., 0.95]
+        for beta in np.arange(0.05, 1.0, 0.05):
             self.beta = beta
             self._get_alphas()
             self._get_denominator()
 
             log_probability = self.log_probability(sents)
-
             if best_log_prob < log_probability:
                 best_log_prob = log_probability
                 best_beta = self.beta
@@ -511,3 +509,10 @@ class BackOffNGram(NGram):
             if denominator:
                 probability = numerator / float(denominator)
             return probability
+
+sents = ['el gato quiere comer pescado .'.split(),
+        'la gata quiere comer salmon .'.split(),
+        'la persona que mas quiero en este mundo .'.split(),
+        'sevilla es un municipio de la comunidad autónoma de andalucia .'.split()
+        ]
+ngram = InterpolatedNGram(3, sents)
