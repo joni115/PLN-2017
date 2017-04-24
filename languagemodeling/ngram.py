@@ -509,10 +509,3 @@ class BackOffNGram(NGram):
             if denominator:
                 probability = numerator / float(denominator)
             return probability
-
-sents = ['el gato quiere comer pescado .'.split(),
-        'la gata quiere comer salmon .'.split(),
-        'la persona que mas quiero en este mundo .'.split(),
-        'sevilla es un municipio de la comunidad autónoma de andalucia .'.split()
-        ]
-ngram = InterpolatedNGram(3, sents)
