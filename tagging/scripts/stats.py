@@ -40,6 +40,8 @@ if __name__ == '__main__':
             words.append(word)
             tags.append(tagg)
 
+    # to save ambiguity levels. for example
+    # {1: {'el', 'la'}, 2: {'flaco', 'enano'}, ...}
     level_ambiguity = defaultdict(set)
     for key in ambiguity.keys():
         level_ambiguity[len(ambiguity[key])].update((key,))
