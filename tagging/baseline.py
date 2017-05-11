@@ -16,9 +16,9 @@ class BaselineTagger:
         # to save the best tagg for a word
         taggs_for_words = defaultdict(str)
         for word, tagg in words_tagged_count.keys():
-            if best_tag[(word, tagg)] < words_tagged_count[(word, tagg)]:
+            if best_tag[word] < words_tagged_count[(word, tagg)]:
                 taggs_for_words[word] = tagg
-                best_tag[(word, tagg)] = words_tagged_count[(word, tagg)]
+                best_tag[word] = words_tagged_count[(word, tagg)]
 
         self.taggs_for_words = taggs_for_words
         self.unk_word = 'nc0s000'
