@@ -21,6 +21,7 @@ class BaselineTagger:
                 best_tag[(word, tagg)] = words_tagged_count[(word, tagg)]
 
         self.taggs_for_words = taggs_for_words
+        self.unk_word = 'nc0s000'
 
     def tag(self, sent):
         """Tag a sentence.
@@ -33,7 +34,7 @@ class BaselineTagger:
         """Tag a word.
         w -- the word.
         """
-        return self.taggs_for_words.get(w, 'nc0s000')
+        return self.taggs_for_words.get(w, self.unk_word)
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
