@@ -40,7 +40,7 @@ def print_confusion_matrix(conf_matrix, labels):
     for i, label in enumerate(labels):
         print('|{:^10} '.format(label), end='')
         for value in conf_matrix[i]:
-            print('|{:^9.2f}'.format(value), end='')
+            print('|{:^9.5f}'.format(value), end='')
         print('|')
 
 
