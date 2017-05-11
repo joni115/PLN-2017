@@ -1,3 +1,10 @@
+from collections import defaultdict, Counter
+
+from math import log2
+
+def log2m(x):
+    return (lambda x: log2(x) if x > 0 else float('-inf'))(x)
+
 class HMM:
 
     def __init__(self, n, tagset, trans, out):
@@ -7,6 +14,10 @@ class HMM:
         trans -- transition probabilities dictionary.
         out -- output probabilities dictionary.
         """
+        self.n = n
+        self.tagset = tagset
+        self.trans = trans
+        self.out = out
 
     def tagset(self):
         """Returns the set of tags.
@@ -19,6 +30,7 @@ class HMM:
         tag -- the tag.
         prev_tags -- tuple with the previous n-1 tags (optional only if n = 1).
         """
+        return self.trans.get(prev_tags).get(tag, 0)
 
     def out_prob(self, word, tag):
         """Probability of a word given a tag.
@@ -26,6 +38,7 @@ class HMM:
         word -- the word.
         tag -- the tag.
         """
+        return self.out.get(tag).get(word, 0)
 
     def tag_prob(self, y):
         """
@@ -34,6 +47,16 @@ class HMM:
 
         y -- tagging.
         """
+        n = self.n
+
+        list_y = list(y)
+        list_y = ['<s>'] * (n - 1) + list_y + ['</s>']
+
+        prob = 1
+        for index in range(n - 1, len(list_y)):
+            prob *= self.trans_prob(list_y[index], tuple(list_y[index-n+1: index]))
+
+        return prob
 
     def prob(self, x, y):
         """
@@ -43,6 +66,13 @@ class HMM:
         x -- sentence.
         y -- tagging.
         """
+        assert len(x) == len(y)
+
+        prob = 1
+        for i in range(len(x)):
+            prob *= self.out_prob(x[i], y[i])
+
+        return prob * self.tag_prob(y)
 
     def tag_log_prob(self, y):
         """
@@ -50,6 +80,16 @@ class HMM:
 
         y -- tagging.
         """
+        n = self.n
+
+        list_y = list(y)
+        list_y = ['<s>'] * (n - 1) + list_y + ['</s>']
+
+        prob = 0
+        for index in range(n - 1, len(list_y)):
+            prob += log2m(self.trans_prob(list_y[index], tuple(list_y[index-n+1: index])))
+
+        return prob
 
     def log_prob(self, x, y):
         """
@@ -58,12 +98,21 @@ class HMM:
         x -- sentence.
         y -- tagging.
         """
+        assert len(x) == len(y)
+
+        prob = 0
+        for i in range(len(x)):
+            prob += log2m(self.out_prob(x[i], y[i]))
+
+        return prob + self.tag_log_prob(y)
 
     def tag(self, sent):
         """Returns the most probable tagging for a sentence.
 
         sent -- the sentence.
         """
+        V = ViterbiTagger(self)
+        return V.tag(sent)
 
 
 class ViterbiTagger:
@@ -72,6 +121,7 @@ class ViterbiTagger:
         """
         hmm -- the HMM.
         """
+        self.hmm = hmm
 
     def tag(self, sent):
         """Returns the most probable tagging for a sentence.
