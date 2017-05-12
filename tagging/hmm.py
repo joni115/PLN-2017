@@ -169,3 +169,23 @@ class ViterbiTagger:
                 best_tagging = pi[m][taggs][1]
 
         return best_tagging
+
+
+class MLHMM(HMM):
+
+    def __init__(self, n, tagged_sents, addone=True):
+        """
+        n -- order of the model.
+        tagged_sents -- training sentences, each one being a list of pairs.
+        addone -- whether to use addone smoothing (default: True).
+        """
+
+    def tcount(self, tokens):
+        """Count for an n-gram or (n-1)-gram of tags.
+        tokens -- the n-gram or (n-1)-gram tuple of tags.
+        """
+
+    def unknown(self, w):
+        """Check if a word is unknown for the model.
+        w -- the word.
+        """
