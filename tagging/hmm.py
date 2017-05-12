@@ -15,14 +15,14 @@ class HMM:
         out -- output probabilities dictionary.
         """
         self.n = n
-        self.tagset = tagset
+        self.tag_set = tagset
         self.trans = trans
         self.out = out
 
     def tagset(self):
         """Returns the set of tags.
         """
-        return self.tagset
+        return self.tag_set
 
     def trans_prob(self, tag, prev_tags):
         """Probability of a tag.
@@ -122,9 +122,56 @@ class ViterbiTagger:
         hmm -- the HMM.
         """
         self.hmm = hmm
+        self._pi = None
 
     def tag(self, sent):
         """Returns the most probable tagging for a sentence.
 
         sent -- the sentence.
         """
+        N = self.hmm.n
+        trans = self.hmm.trans
+        tag_prob = self.hmm.trans_prob
+        out_prob = self.hmm.out_prob
+        words = list(sent)
+
+
+        self._pi = pi = defaultdict(dict)
+
+        pi[0][tuple(['<s>'] * (N - 1))] = (0, [])
+
+        for k in range(1, len(sent) + 1):
+            for w in pi[k-1].keys():
+                for next_tagg in trans[w].keys():
+                    prob = 0
+                    previous_tagg =  pi[k-1][w][1]
+                    list_of_tag = previous_tagg + [next_tagg]
+                    # prob pi(k-1, w, v)
+                    prob += pi[k-1][w][0]
+                    prob += log2m(tag_prob(next_tagg, w))
+                    prob += log2m(out_prob(words[k-1], next_tagg))
+                    key_tag = tuple(list(w[1:]) + list(next_tagg))
+                    if key_tag not in pi[k] or pi[k][key_tag][0] < prob:
+                        pi[k][key_tag] = (prob, list_of_tag)
+
+
+
+
+tagset = {'D', 'N', 'V'}
+trans = {
+    ('<s>', '<s>'): {'D': 1.0},
+    ('<s>', 'D'): {'N': 1.0},
+    ('D', 'N'): {'V': 0.8, 'N': 0.2},
+    ('N', 'N'): {'V': 1.0},
+    ('N', 'V'): {'</s>': 1.0},
+}
+out = {
+    'D': {'the': 1.0},
+    'N': {'dog': 0.4, 'barks': 0.6},
+    'V': {'dog': 0.1, 'barks': 0.9},
+}
+hmm = HMM(3, tagset, trans, out)
+tagger = ViterbiTagger(hmm)
+
+x = 'the dog barks'.split()
+y = tagger.tag(x)
