@@ -134,13 +134,14 @@ class ViterbiTagger:
         tag_prob = self.hmm.trans_prob
         out_prob = self.hmm.out_prob
         words = list(sent)
+        m = len(sent)
 
 
         self._pi = pi = defaultdict(dict)
 
         pi[0][tuple(['<s>'] * (N - 1))] = (0, [])
 
-        for k in range(1, len(sent) + 1):
+        for k in range(1, m + 1):
             for w in pi[k-1].keys():
                 for next_tagg in trans[w].keys():
                     prob = 0
@@ -154,24 +155,13 @@ class ViterbiTagger:
                     if key_tag not in pi[k] or pi[k][key_tag][0] < prob:
                         pi[k][key_tag] = (prob, list_of_tag)
 
+        max_prob = float('-inf')
+        best_tagging = []
+        for taggs in pi[m].keys():
+            prob = pi[m][taggs][0]
+            prob += log2m(tag_prob('</s>', taggs))
+            if max_prob < prob:
+                max_prob = prob
+                best_tagging = pi[m][taggs][1]
 
-
-
-tagset = {'D', 'N', 'V'}
-trans = {
-    ('<s>', '<s>'): {'D': 1.0},
-    ('<s>', 'D'): {'N': 1.0},
-    ('D', 'N'): {'V': 0.8, 'N': 0.2},
-    ('N', 'N'): {'V': 1.0},
-    ('N', 'V'): {'</s>': 1.0},
-}
-out = {
-    'D': {'the': 1.0},
-    'N': {'dog': 0.4, 'barks': 0.6},
-    'V': {'dog': 0.1, 'barks': 0.9},
-}
-hmm = HMM(3, tagset, trans, out)
-tagger = ViterbiTagger(hmm)
-
-x = 'the dog barks'.split()
-y = tagger.tag(x)
+        return best_tagging
