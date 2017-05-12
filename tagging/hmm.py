@@ -142,7 +142,10 @@ class ViterbiTagger:
         pi[0][tuple(['<s>'] * (N - 1))] = (0, [])
 
         for k in range(1, m + 1):
+            # the previous keys.
             for w in pi[k-1].keys():
+                # only the next possible tags.
+                # for others tags the probability will be -inf.
                 for next_tagg in trans[w].keys():
                     prob = 0
                     previous_tagg =  pi[k-1][w][1]
@@ -151,6 +154,7 @@ class ViterbiTagger:
                     prob += pi[k-1][w][0]
                     prob += log2m(tag_prob(next_tagg, w))
                     prob += log2m(out_prob(words[k-1], next_tagg))
+                    # key_tag will be taggs (the actual taggs).
                     key_tag = tuple(list(w[1:]) + list(next_tagg))
                     if key_tag not in pi[k] or pi[k][key_tag][0] < prob:
                         pi[k][key_tag] = (prob, list_of_tag)
