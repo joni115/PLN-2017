@@ -191,6 +191,7 @@ class MLHMM(HMM):
         self.__count_tagg = count_tag = Counter(taggs)
         # for uknown words.
         self.__V = set(words)
+        taggs = ('<s>',) * (n-1) + taggs
         # for tcount.
         lcount = []
         for i in range(n):
@@ -199,7 +200,7 @@ class MLHMM(HMM):
         self.tcount1 = Counter(zip(*(lcount)))
 
         if n == 1:
-            self.tcount2 = {'()': len(taggs)}
+            self.tcount2 = {(): len(taggs)}
         else:
             self.tcount2 = Counter(zip(*(lcount[:-1])))
 
@@ -223,16 +224,18 @@ class MLHMM(HMM):
         """Check if a word is unknown for the model.
         w -- the word.
         """
-        return w in self.__V
+        return w not in self.__V
 
     def init_hmm(self):
+        """
+        Method to estimate parameter for hmm. Then inicialice hmm.
+        """
         n = self.n
         V = len(self.__V)
         count_word_tag = self.__count_word_tag
         count_tagg = self.__count_tagg
         addone = self.addone
 
-        tagset = count_tagg.keys()
         out = defaultdict(dict)
         for (word, tagg), count in count_word_tag.items():
             denom = float(count_tagg[tagg])
@@ -240,8 +243,12 @@ class MLHMM(HMM):
 
         trans = defaultdict(dict)
         for tagg in self.tcount1.keys():
-            num = self.tcount(tagg[:n-1])
-            denom = self.tcount(tagg[n-1])
+            if '</s>' in tagg and '</s>' != tagg[n-1]:
+                continue
+            tagg_num = tagg
+            tagg_denom = tagg[:-1]
+            num = self.tcount(tagg_num)
+            denom = self.tcount(tagg_denom)
             if addone:
                 num += 1
                 denom += V
@@ -249,7 +256,10 @@ class MLHMM(HMM):
             else:
                 if not denom:
                     trans[tagg[:n-1]][tagg[n-1]] = 0
+
                 else:
                     trans[tagg[:n-1]][tagg[n-1]] = num / float(denom)
 
-        HMM.__init__(self, N, tagset, trans, out)
+        tagset = count_tagg.keys()
+        HMM.__init__(self, n, tagset, trans, out)
+
