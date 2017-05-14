@@ -179,13 +179,82 @@ class MLHMM(HMM):
         tagged_sents -- training sentences, each one being a list of pairs.
         addone -- whether to use addone smoothing (default: True).
         """
+        assert n > 0
+        self.n = n
+        self.addone = addone
+
+        # for estimate e.
+        self.__count_word_tag = count_word_tag = Counter()
+        self.__count_tagg = count_tag = Counter()
+        self.__V = 0
+
+        vocabulary = set()
+
+        self.tcount1 = tcount1 = defaultdict(int)
+        self.tcount2 = tcount2 = defaultdict(int)
+
+        N = n
+        for sents in tagged_sents:
+            # for e(word|tagg)
+            count_word_tag.update(sents)
+            words, taggs = zip(*sents)
+            count_tag.update(taggs)
+            vocabulary.update(*words)
+            taggs = list(taggs) + ['</s>']
+            taggs = tuple(taggs)
+            for i in range(len(taggs) - N+1):
+                tcount1[taggs[i:i + N]] += 1
+                tcount2[taggs[i:i + N - 1]] += 1
+            tcount2[taggs[i+1:i+N]] +=1
+
+        self.__V = len(vocabulary)
+        # self.init_hmm()
 
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
         tokens -- the n-gram or (n-1)-gram tuple of tags.
         """
+        N = self.n
+        result = 0
+        if len(tokens) == N:
+            result = self.tcount1.get(tokens, 0)
+        else:
+            result = self.tcount2.get(tokens, 0)
+        return result
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
         w -- the word.
         """
+
+    def init_hmm(self):
+        V = self.__V
+        count_word_tag = self.__count_word_tag
+        count_tagg = self.__count_tagg
+        addone = self.addone
+
+        tagset = count_tagg.keys()
+        out = defaultdict(dict)
+        for word, tagg in count_word_tag.keys():
+            out[tagg][word] = count_word_tag[(word, tagg)] / float(count_tagg(tagg))
+
+        trans = defaultdict(dict)
+        for tagg in self.tcount1.keys():
+            num = self.tcount(tag[:n-1])
+            denom = self.tcount(tag[n-1])
+            if addone:
+                num += 1
+                denom += V
+                trans[tagg[:n-1]][tagg[n-1]] = num / float(denom)
+            else:
+                trans[tagg[:n-1]][tag[n-1]] = num / float(denom)
+
+
+tagged_sents = [
+            list(zip('el gato come pescado .'.split(),
+                 'D N V N P'.split())),
+            list(zip('la gata come salmón .'.split(),
+                 'D N V N P'.split())),
+        ]
+
+hmm = MLHMM(2, tagged_sents)
