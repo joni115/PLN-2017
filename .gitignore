@@ -1,7 +1,6 @@
 *.txt
 __pycache__
 languagemodeling/scripts/corpus/
-languagemodeling/scripts/interpolated.txt
 languagemodeling/scripts/output/
 pln_2015.egg-info/
 ancora-3.0.1es/
