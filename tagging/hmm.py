@@ -183,78 +183,73 @@ class MLHMM(HMM):
         self.n = n
         self.addone = addone
 
+
+        words_tagg = [word_tagg for sents in tagged_sents for word_tagg in sents + [('', '</s>')]]
+        words, taggs = zip(*words_tagg)
         # for estimate e.
-        self.__count_word_tag = count_word_tag = Counter()
-        self.__count_tagg = count_tag = Counter()
-        self.__V = 0
+        self.__count_word_tag = count_word_tag = Counter(words_tagg)
+        self.__count_tagg = count_tag = Counter(taggs)
+        # for uknown words.
+        self.__V = set(words)
+        # for tcount.
+        lcount = []
+        for i in range(n):
+            lcount.append(taggs[i:])
 
-        vocabulary = set()
+        self.tcount1 = Counter(zip(*(lcount)))
 
-        self.tcount1 = tcount1 = defaultdict(int)
-        self.tcount2 = tcount2 = defaultdict(int)
+        if n == 1:
+            self.tcount2 = {'()': len(taggs)}
+        else:
+            self.tcount2 = Counter(zip(*(lcount[:-1])))
 
-        N = n
-        for sents in tagged_sents:
-            # for e(word|tagg)
-            count_word_tag.update(sents)
-            words, taggs = zip(*sents)
-            count_tag.update(taggs)
-            vocabulary.update(*words)
-            taggs = list(taggs) + ['</s>']
-            taggs = tuple(taggs)
-            for i in range(len(taggs) - N+1):
-                tcount1[taggs[i:i + N]] += 1
-                tcount2[taggs[i:i + N - 1]] += 1
-            tcount2[taggs[i+1:i+N]] +=1
-
-        self.__V = len(vocabulary)
-        # self.init_hmm()
+        self.init_hmm()
 
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
         tokens -- the n-gram or (n-1)-gram tuple of tags.
         """
-        N = self.n
+        n = self.n
         result = 0
-        if len(tokens) == N:
+
+        if len(tokens) == n:
             result = self.tcount1.get(tokens, 0)
         else:
             result = self.tcount2.get(tokens, 0)
+
         return result
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
         w -- the word.
         """
+        return w in self.__V
 
     def init_hmm(self):
-        V = self.__V
+        n = self.n
+        V = len(self.__V)
         count_word_tag = self.__count_word_tag
         count_tagg = self.__count_tagg
         addone = self.addone
 
         tagset = count_tagg.keys()
         out = defaultdict(dict)
-        for word, tagg in count_word_tag.keys():
-            out[tagg][word] = count_word_tag[(word, tagg)] / float(count_tagg(tagg))
+        for (word, tagg), count in count_word_tag.items():
+            denom = float(count_tagg[tagg])
+            out[tagg][word] = count / denom
 
         trans = defaultdict(dict)
         for tagg in self.tcount1.keys():
-            num = self.tcount(tag[:n-1])
-            denom = self.tcount(tag[n-1])
+            num = self.tcount(tagg[:n-1])
+            denom = self.tcount(tagg[n-1])
             if addone:
                 num += 1
                 denom += V
                 trans[tagg[:n-1]][tagg[n-1]] = num / float(denom)
             else:
-                trans[tagg[:n-1]][tag[n-1]] = num / float(denom)
+                if not denom:
+                    trans[tagg[:n-1]][tagg[n-1]] = 0
+                else:
+                    trans[tagg[:n-1]][tagg[n-1]] = num / float(denom)
 
-
-tagged_sents = [
-            list(zip('el gato come pescado .'.split(),
-                 'D N V N P'.split())),
-            list(zip('la gata come salmón .'.split(),
-                 'D N V N P'.split())),
-        ]
-
-hmm = MLHMM(2, tagged_sents)
+        HMM.__init__(self, N, tagset, trans, out)
