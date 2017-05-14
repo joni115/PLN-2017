@@ -41,6 +41,6 @@ if __name__ == '__main__':
 
     # save it
     filename = opts['-o']
-    f = open(filename, 'wb')
-    pickle.dump(model, f)
+    with open(filename, 'wb') as f:
+        pickle.dump(model, f)
     f.close()
