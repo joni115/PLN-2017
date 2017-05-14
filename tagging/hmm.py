@@ -147,19 +147,21 @@ class ViterbiTagger:
                 # only the next possible tags.
                 # for others tags the probability will be -inf.
                 for next_tagg in trans[w].keys():
+                    # we dont need to save </s>.
                     if '</s>' in next_tagg:
                         continue
                     prob = 0
                     previous_tagg =  pi[k-1][w][1]
                     list_of_tag = previous_tagg + [next_tagg]
+                    # e = e(word | tagg)
+                    e = out_prob(words[k-1], next_tagg)
+                    # if e = 0 we dont need to save it in pi.
+                    if not e:
+                        continue
+                    prob += log2m(e)
                     # prob pi(k-1, w, v)
                     prob += pi[k-1][w][0]
                     prob += log2m(tag_prob(next_tagg, w))
-                    # e = e(word | tagg)
-                    e = out_prob(words[k-1], next_tagg)
-                    if not e:
-                        continue
-                    prob += log2m(out_prob(words[k-1], next_tagg))
                     # key_tag will be taggs (the actual taggs).
                     key_tag = w[1:] + (next_tagg,)
                     if key_tag not in pi[k] or pi[k][key_tag][0] < prob:
@@ -193,8 +195,8 @@ class MLHMM(HMM):
         words_tagg = [word_tagg for sents in tagged_sents for word_tagg in sents + [('', '</s>')]]
         words, taggs = zip(*words_tagg)
         # for estimate e.
-        self.__count_word_tag = count_word_tag = Counter(words_tagg)
-        self.__count_tagg = count_tag = Counter(taggs)
+        self.__count_word_tag = Counter(words_tagg)
+        self.__count_tagg = Counter(taggs)
         # for uknown words.
         self.__V = set(words)
         taggs = ('<s>',) * (n-1) + taggs
@@ -211,6 +213,7 @@ class MLHMM(HMM):
             self.tcount2 = Counter(zip(*(lcount[:-1])))
 
         self.init_hmm()
+
 
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
