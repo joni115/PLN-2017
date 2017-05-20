@@ -30,7 +30,9 @@ class HMM:
         tag -- the tag.
         prev_tags -- tuple with the previous n-1 tags (optional only if n = 1).
         """
-        return self.trans.get(prev_tags).get(tag, 0)
+        print(tag, prev_tags)
+        print(self.trans)
+        return self.trans.get(prev_tags, {}).get(tag, 0)
 
     def out_prob(self, word, tag):
         """Probability of a word given a tag.
@@ -122,7 +124,6 @@ class ViterbiTagger:
         hmm -- the HMM.
         """
         self.hmm = hmm
-        self._pi = None
 
     def tag(self, sent):
         """Returns the most probable tagging for a sentence.
@@ -130,42 +131,36 @@ class ViterbiTagger:
         sent -- the sentence.
         """
         N = self.hmm.n
-        trans = self.hmm.trans
         tag_prob = self.hmm.trans_prob
         out_prob = self.hmm.out_prob
+        set_tags = self.hmm.tag_set
         words = list(sent)
         m = len(sent)
 
 
         self._pi = pi = defaultdict(dict)
 
+        # inicializate pi.
         pi[0][tuple(['<s>'] * (N - 1))] = (0, [])
 
+        # here begins the magic..
         for k in range(1, m + 1):
-            # the previous keys.
-            for w in pi[k-1].keys():
-                # only the next possible tags.
-                # for others tags the probability will be -inf.
-                for next_tagg in trans[w].keys():
-                    # we dont need to save </s>.
-                    if '</s>' in next_tagg:
-                        continue
-                    prob = 0
-                    previous_tagg =  pi[k-1][w][1]
-                    list_of_tag = previous_tagg + [next_tagg]
-                    # e = e(word | tagg)
-                    e = out_prob(words[k-1], next_tagg)
-                    # if e = 0 we dont need to save it in pi.
-                    if not e:
-                        continue
-                    prob += log2m(e)
-                    # prob pi(k-1, w, v)
-                    prob += pi[k-1][w][0]
-                    prob += log2m(tag_prob(next_tagg, w))
-                    # key_tag will be taggs (the actual taggs).
-                    key_tag = w[1:] + (next_tagg,)
-                    if key_tag not in pi[k] or pi[k][key_tag][0] < prob:
-                        pi[k][key_tag] = (prob, list_of_tag)
+            for tag in set_tags:
+                e = out_prob(sent[k-1], tag)
+                # if e < 0 it's not necesary
+                # e = e(word | tag)
+                if not e:
+                    continue
+
+                for prev_tags, (prob_tagg, tagging) in pi[k-1].items():
+                    # q = q(tag | prev_tags)
+                    q = tag_prob(tag, prev_tags)
+                    # if q == 0. Don't need to add to pi.
+                    if q:
+                        prob_tagg += log2m(q) + log2m(e)
+                        key_tag = (prev_tags + (tag,))[1:]
+                        if key_tag not in pi[k] or  pi[k][key_tag][0] < prob_tagg:
+                            pi[k][key_tag] = (prob_tagg, tagging + [tag])
 
         max_prob = float('-inf')
         best_tagging = []
@@ -180,7 +175,7 @@ class ViterbiTagger:
 
 
 class MLHMM(HMM):
-
+ 
     def __init__(self, n, tagged_sents, addone=True):
         """
         n -- order of the model.
@@ -188,87 +183,95 @@ class MLHMM(HMM):
         addone -- whether to use addone smoothing (default: True).
         """
         assert n > 0
-        self.n = n
         self.addone = addone
+        self.n = n
+
+        # tcount of n-grams
+        self.tcount1 = tcount1 = defaultdict(int)
+        # tcount of (n-1)-grams
+        # to calculate parameter q is better.
+        self.tcount2 = tcount2 = defaultdict(int)
+        # for out probability. e probability.
+        self.__count_out = count_out = Counter()
+        # for count tags for e probability.
+        self.__count_tags = count_tags = Counter()
+
+        for sent in tagged_sents:
+            count_out += Counter(sent)
+            words, tags = zip(*sent)
+            count_tags += Counter(tags)
+            tags += ('</s>',)
+            for index in range(len(tags) - n+1):
+                tcount1[tags[index:index+n]] += 1
+                tcount2[tags[index:index+n-1]] += 1
 
 
-        words_tagg = [word_tagg for sents in tagged_sents for word_tagg in sents + [('', '</s>')]]
-        words, taggs = zip(*words_tagg)
-        # for estimate e.
-        self.__count_word_tag = Counter(words_tagg)
-        self.__count_tagg = Counter(taggs)
-        # for uknown words.
-        self.__V = set(words)
-        taggs = ('<s>',) * (n-1) + taggs
-        # for tcount.
-        lcount = []
-        for i in range(n):
-            lcount.append(taggs[i:])
+        self.tag_set = set(count_tags.keys())
+        # estimate trans and out probabilities
+        self.__get_out_prob()
+        self.__get_trans_prob()
 
-        self.tcount1 = Counter(zip(*(lcount)))
 
-        if n == 1:
-            self.tcount2 = {(): len(taggs)}
-        else:
-            self.tcount2 = Counter(zip(*(lcount[:-1])))
+    def __get_out_prob(self):
+        """
+        Calculate out probs i.e. parameter e.
+        """
+        count_out = self.__count_out
+        count_tags = self.__count_tags
 
-        self.init_hmm()
+        self.out = out = defaultdict(dict)
+        for (word, tag), count in count_out.items():
+            out[tag][word] = count / count_tags[tag]
+
+    def __get_trans_prob(self):
+        """
+        Calculate trans probs i.e. parameter q.
+        """
+        addone = self.addone
+        tcount = self.tcount1
+
+        tags = tcount.keys()
+        # for addone. +1 because of </s>
+        T = len(tags) + 1
+
+        self.tans = trans = defaultdict(dict)
+        for tags in tcount.keys():
+            num = self.tcount(tags)
+            denom = self.tcount(tags[:-1])
+            if addone:
+                num += 1
+                denom += T
+            trans[tags[:-1]][tags[-1]] = num / denom
 
 
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
+ 
         tokens -- the n-gram or (n-1)-gram tuple of tags.
         """
         n = self.n
-        result = 0
 
-        if len(tokens) == n:
+        # for n-gram
+        if n == len(tokens):
             result = self.tcount1.get(tokens, 0)
         else:
             result = self.tcount2.get(tokens, 0)
-
         return result
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
+ 
         w -- the word.
         """
-        return w not in self.__V
+ 
+    """
+       Todos los métodos de HMM.
+    """
 
-    def init_hmm(self):
-        """
-        Method to estimate parameter for hmm. Then inicialice hmm.
-        """
-        n = self.n
-        V = len(self.__V)
-        count_word_tag = self.__count_word_tag
-        count_tagg = self.__count_tagg
-        addone = self.addone
-
-        out = defaultdict(dict)
-        for (word, tagg), count in count_word_tag.items():
-            denom = float(count_tagg[tagg])
-            out[tagg][word] = count / denom
-
-        trans = defaultdict(dict)
-        for tagg in self.tcount1.keys():
-            if '</s>' in tagg and '</s>' != tagg[n-1]:
-                continue
-            tagg_num = tagg
-            tagg_denom = tagg[:-1]
-            num = self.tcount(tagg_num)
-            denom = self.tcount(tagg_denom)
-            if addone:
-                num += 1
-                denom += V
-                trans[tagg[:n-1]][tagg[n-1]] = num / float(denom)
-            else:
-                if not denom:
-                    trans[tagg[:n-1]][tagg[n-1]] = 0
-
-                else:
-                    trans[tagg[:n-1]][tagg[n-1]] = num / float(denom)
-
-        tagset = count_tagg.keys()
-        HMM.__init__(self, n, tagset, trans, out)
-
+tagged_sents = [
+            list(zip('el gato come pescado .'.split(),
+                 'D N V N P'.split())),
+            list(zip('la gata come salmón .'.split(),
+                 'D N V N P'.split())),
+        ]
+hmm = MLHMM(1, tagged_sents)
