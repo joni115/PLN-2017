@@ -30,8 +30,6 @@ class HMM:
         tag -- the tag.
         prev_tags -- tuple with the previous n-1 tags (optional only if n = 1).
         """
-        print(tag, prev_tags)
-        print(self.trans)
         return self.trans.get(prev_tags, {}).get(tag, 0)
 
     def out_prob(self, word, tag):
@@ -40,7 +38,7 @@ class HMM:
         word -- the word.
         tag -- the tag.
         """
-        return self.out.get(tag).get(word, 0)
+        return self.out.get(tag, {}).get(word, 0)
 
     def tag_prob(self, y):
         """
@@ -191,16 +189,22 @@ class MLHMM(HMM):
         # tcount of (n-1)-grams
         # to calculate parameter q is better.
         self.tcount2 = tcount2 = defaultdict(int)
+        # for save the vocabulary words
+        self.__W = W = set()
         # for out probability. e probability.
         self.__count_out = count_out = Counter()
         # for count tags for e probability.
         self.__count_tags = count_tags = Counter()
 
         for sent in tagged_sents:
+            # why?
+            if sent == []:
+                continue
             count_out += Counter(sent)
             words, tags = zip(*sent)
+            W.update(words)
             count_tags += Counter(tags)
-            tags += ('</s>',)
+            tags = ('<s>',)*(n-1) + tags + ('</s>',)
             for index in range(len(tags) - n+1):
                 tcount1[tags[index:index+n]] += 1
                 tcount2[tags[index:index+n-1]] += 1
@@ -228,15 +232,14 @@ class MLHMM(HMM):
         Calculate trans probs i.e. parameter q.
         """
         addone = self.addone
-        tcount = self.tcount1
+        tcount1 = self.tcount1
 
-        tags = tcount.keys()
         # for addone. +1 because of </s>
-        T = len(tags) + 1
+        T = len(self.tag_set) + 1
 
-        self.tans = trans = defaultdict(dict)
-        for tags in tcount.keys():
-            num = self.tcount(tags)
+        self.trans = trans = defaultdict(dict)
+        for tags, count in tcount1.items():
+            num = count
             denom = self.tcount(tags[:-1])
             if addone:
                 num += 1
@@ -260,18 +263,37 @@ class MLHMM(HMM):
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
- 
         w -- the word.
         """
- 
-    """
-       Todos los métodos de HMM.
-    """
+        return w not in self.__W
 
-tagged_sents = [
-            list(zip('el gato come pescado .'.split(),
-                 'D N V N P'.split())),
-            list(zip('la gata come salmón .'.split(),
-                 'D N V N P'.split())),
-        ]
-hmm = MLHMM(1, tagged_sents)
+    def trans_prob(self, tag, prev_tags):
+        """Overwrite of tans_probs. Probability of a tag with smooth addone.
+
+        tag -- the tag.
+        prev_tags -- tuple with the previous n-1 tags (optional only if n = 1).
+        """
+        # +1 for </s>
+        T = len(self.tag_set) + 1
+
+        trans = self.trans.get(prev_tags, {})
+        if self.addone and tag not in trans:
+            denom = self.tcount(prev_tags) + T
+            result = 1 / denom
+        else:
+            result = trans.get(tag, 0.0)
+        return result
+
+    def out_prob(self, word, tag):
+        """OverWrite of out_prob. 
+        Probability of a word given a tag whith smooth addone.
+
+        word -- the word.
+        tag -- the tag.
+        """
+        if self.addone and self.unknown(word):
+            result = 1 / len(self.__W)
+        else:
+            result = self.out.get(tag, {}).get(word, 0)
+
+        return result
