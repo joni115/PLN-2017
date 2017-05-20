@@ -7,8 +7,8 @@ Usage:
 Options:
   -m <model>    Model to use [default: base]:
                   base: Baseline
-                  MLHMM: MLHMM
-  -n <int>      (n-1)-gram to evaluate (for MLHMM) [default: None].
+                  hmm: MLHMM
+  -n <int>      (n-1)-gram to evaluate (for hmm) [default: None].
   -o <file>     Output model file.
   -h --help     Show this screen.
 """
@@ -24,7 +24,7 @@ def MLHMM_trainer(tagged_sents):
 
 models = {
     'base': BaselineTagger,
-    'MLHMM': MLHMM_trainer,
+    'hmm': MLHMM_trainer,
 }
 
 if __name__ == '__main__':
