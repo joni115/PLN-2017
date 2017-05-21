@@ -47,6 +47,10 @@ def word_isdigit(h):
     sent, i = h.sent, h.i
     return sent[i].isdigit()
 
+def sufix_feature(h):
+    sent, i = h.sent, h.i
+    return sent[i].endswith('ar') or sent[i].endswith('er') or sent[i].endswith('ir')
+
 class NPrevTags(Feature):
  
     def __init__(self, n):
