@@ -52,6 +52,11 @@ def sufix_feature(h):
     return sent[i].endswith('ar') or sent[i].endswith('er') or sent[i].endswith('ir')
 
 class NPrevTags(Feature):
+    """Parametric feature.
+
+    Example of use:
+    prev_tags_is_digir = NPrevTags(word_is_digit)
+    """
  
     def __init__(self, n):
         """Feature: n previous tags tuple.
@@ -69,7 +74,12 @@ class NPrevTags(Feature):
 
 
 class PrevWord(Feature):
- 
+    """Parametric feature.
+
+    Example of use:
+    prev_word_title = PrevWord(is_title)
+    """
+
     def __init__(self, f):
         """Feature: the feature f applied to the previous word.
  
