@@ -13,7 +13,7 @@ Options:
                   lr: LogisticRegression
                   mnb: MultinomialNB
                   lsvc: LinearSVC
-  -n <int>      (n-1)-gram to evaluate (for hmm) [default: None].
+  -n <int>      (n-1)-gram to evaluate (for hmm) [default: 0].
   -o <file>     Output model file.
   -h --help     Show this screen.
 """
