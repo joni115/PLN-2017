@@ -5,12 +5,12 @@ Usage:
   train.py -h | --help
 
 Options:
-  -m <model>    Model to use [default: base]:
+  -m <model>    Model to use [default: base].
                   base: Baseline
                   hmm: MLHMM
                   memm: MEMM
-  -c <classifier> Classifier to use for memm[default: lg].
-                  lg: LogisticRegression
+  -c <classifier> Classifier to use for memm [default: 'lr'].
+                  lr: LogisticRegression
                   mnb: MultinomialNB
                   lsvc: LinearSVC
   -n <int>      (n-1)-gram to evaluate (for hmm) [default: None].
@@ -25,17 +25,21 @@ from tagging.baseline import BaselineTagger
 from tagging.hmm import MLHMM
 from tagging.memm import MEMM
 
+
 def MLHMM_trainer(tagged_sents):
     return MLHMM(n, tagged_sents)
 
+
 def MEM_trainer(tagged_sents):
     return MEMM(n, tagged_sents, c)
+
 
 models = {
     'base': BaselineTagger,
     'hmm': MLHMM_trainer,
     'memm': MEM_trainer,
 }
+
 
 if __name__ == '__main__':
     opts = docopt(__doc__)
