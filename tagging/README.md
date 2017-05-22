@@ -12,7 +12,7 @@ Sents: 17378
 Total words: 517194
 Vocabulary words: 46501
 Vocabulary taggs: 85
-________________________________________________________________________________
+
 __Frequencies Taggs__
 
   | Tagg    | Frequencie  |Percent  |     Words |
@@ -24,11 +24,13 @@ __Frequencies Taggs__
   |  fc     |    30147    | 5.83%   |',' |
   |np00000  |    29111    | 5.63%   |'Gobierno','España','PP','Barcelona','Madrid' |
   |nc0p000  |    27736    | 5.36%   |'años','millones','personas','países','días' |
-  |  fp     |    17512    | 3.39%   |'.'' |
+  |  fp     |    17512    | 3.39%   |'.' |
   |  rg     |    15336    | 2.97%   |'más','hoy','también','ayer','ya' |
   |  cc     |    15023    | 2.90%   |'y','pero','o','Pero','e' |
-________________________________________________________________________________
+
+
 __Ambiguity__
+
 | Level  |   Amount    | Percent |    Words  |
 |:------:|:-----------:|:-------:|:---------:|
 |    1   |     43972   | 94.56%  |',','con','por','su','El'|
