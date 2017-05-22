@@ -1,41 +1,45 @@
-#PLN: Procesamiento de lenguaje natural 2017
+# PLN: Procesamiento de lenguaje natural 2017
 ---------------------------------------------
-##Práctico 2
+## Práctico 2
 --------------------------------------------
-####Ejercicio 1
+#### Ejercicio 1
 
-En este ejercicio se nos pedía calcular las estadisticas en un corpus, para ello implementamos stats.py. El corpus usado es ancora-3.0.1es pasado por la cátedra.
+En este ejercicio se nos pedía calcular las estadisticas en un corpus, para ello implementamos stats.py. El corpus usado es ancora-3.0.1 que es pasado por la cátedra.
 
-                 Basic Statics
+__Basic Statics__
+
 Sents: 17378
 Total words: 517194
 Vocabulary words: 46501
 Vocabulary taggs: 85
 ________________________________________________________________________________
-                  Frequencies Taggs
-   Tagg     Frequencie  Percent       Words
-   sp000       79884     15.45%  de;en;a;del;con;
-  nc0s000      63452     12.27%  presidente;equipo;partido;país;año;
-  da0000       54549     10.55%  la;el;los;las;El;
-  aq0000       33906     6.56%   pasado;gran;mayor;nuevo;próximo;
-    fc         30147     5.83%   ,;
-  np00000      29111     5.63%   Gobierno;España;PP;Barcelona;Madrid;
-  nc0p000      27736     5.36%   años;millones;personas;países;días;
-    fp         17512     3.39%   .;
-    rg         15336     2.97%   más;hoy;también;ayer;ya;
-    cc         15023     2.90%   y;pero;o;Pero;e;
+__Frequencies Taggs__
+
+  | Tagg    | Frequencie  |Percent  |     Words |
+  |:-------:|:-----------:|:-------:|:---------:|
+  | sp000   |    79884    |15.45%   |de;en;a;del;con |
+  | nc0s000 |     63452   |  12.27% | presidente;equipo;partido;país;año |
+  |da0000   |    54549    | 10.55%  |la;el;los;las;El |
+  |aq0000   |    33906    | 6.56%   |pasado;gran;mayor;nuevo;próximo |
+  |  fc     |    30147    | 5.83%   |, |
+  |np00000  |    29111    | 5.63%   |Gobierno;España;PP;Barcelona;Madrid |
+  |nc0p000  |    27736    | 5.36%   |años;millones;personas;países;días |
+  |  fp     |    17512    | 3.39%   |. |
+  |  rg     |    15336    | 2.97%   |más;hoy;también;ayer;ya |
+  |  cc     |    15023    | 2.90%   |y;pero;o;Pero;e |
 ________________________________________________________________________________
-                          Ambiguity
-  Level     Amount     Percent      Words
-    1        43972      94.56%  ,;con;por;su;El;
-    2         2318       4.98%  el;en;y;";los;
-    3          180       0.39%  de;la;.;un;no;
-    4           23       0.05%  que;a;dos;este;fue;
-    5            5       0.01%  mismo;cinco;medio;ocho;vista;
-    6            3       0.01%  una;como;uno;
-    7            0       0.00%  
-    8            0       0.00%  
-    9            0       0.00%  
+__Ambiguity__
+| Level  |   Amount    | Percent |    Words  |
+|:------:|:-----------:|:-------:|:---------:|
+|    1   |     43972   | 94.56%  |,;con;por;su;El|
+|    2   |      2318   |  4.98%  |el;en;y;";los|
+|    3   |       180   |  0.39%  |de;la;.;un;no|
+|    4   |        23   |  0.05%  |que;a;dos;este;fue|
+|    5   |         5   |  0.01%  |mismo;cinco;medio;ocho;vista|
+|    6   |         3   |  0.01%  |una;como;uno|
+|    7   |         0   |  0.00%  ||
+|    8   |         0   |  0.00%  ||
+|    9   |         0   |  0.00%  ||
 
 A continuación daré el significado de las 10 tags más frecuentes:
 1. sp000: Preposición.
@@ -49,18 +53,20 @@ A continuación daré el significado de las 10 tags más frecuentes:
 9. rg: Advervio general.
 10. cc: Conjunción.
 
-####Ejercicio2
+#### Ejercicio2
 
 Se implemento la clase baseline, en el cual se elige para cada palabra su etiqueta más frecuente observada en entrenamiento. Para las palabras desconocidas, devolver la etiqueta 'nc0s000'.
 
-####Ejercicio3
+#### Ejercicio3
 
 En este ejercicio entrenamos un modelo baseline. Luego evaluamos el porcentaje de etiquetas correctas, sobre las palabras conocidas y sobre las palabras desconocidas (accuracy). Además graficamos una matriz de confusión para ver que tan bueno es el etiquetado.
 
 Nota: la matriz de confusión se hará sobre las 10 tags más vistas para mejor comprensión.
 
 __Accuracy__: 87.59%
+
 __Accuracy known words__:95.27%
+
 __Acurracy unknown words__:18.01%
 
 **Confusion matrix**
@@ -80,11 +86,11 @@ __Acurracy unknown words__:18.01%
 
 Este modelo es bastante bueno si los textos de entrenamientos son "parecidos" a los textos de predicción debido a la gran acurracy de las palabras conocidas y a la baja acurracy de las palabras desconocidas. Es el modelo más rápido de este proyecto. Con "parecidos" me refiero a que los textos a predecir no tienen muchas palabras desconocidas.
 
-####Ejercicio4
+#### Ejercicio4
 
 En este ejercicio se implemento Hidden Markov Models y Algoritmo de Viterbi. Para implementar el algoritmo de viterbi utilizamos programación dinamica por lo tanto tuvimos que hacer el algoritmo iterativo.
 
-####Ejercicio5
+#### Ejercicio5
 
 En este ejercio se implemento una clase MLHMM un Hidden Markov Model cuyos parámetros se estiman usando Maximum Likelihood sobre un corpus de oraciones etiquetado. La clase debe tiene la misma interfaz que HMM con algunas modificaciones. Además se agrego una nueva opción en el training para entrenar modelos de MLHMMM.
 
@@ -100,20 +106,20 @@ Los resultados son los siguientes:
 
 Notar que estos modelos son mejores para etiquetas desconocidas que el baseline. Además es importante ver que en n igual a 3 y 4 no hay mucha diferencia. En n=1 es claro que el acurracy es demasiado bajo, por lo que conviene usar con n > 2 (e=2 si los textos que queremos predecir no tienen muchas palabras desconocidas).
 
-####Ejercicio6
+#### Ejercicio6
 Implementamos features. Tanto básicos como paramétricos.
 
 Los básicos son:
-1.word_lower: la palabra actual en minúsculas.
-2.word_istitle: la palabra actual empieza en mayúsculas.
-3.word_isupper: la palabra actual está en mayúsculas.
-4.word_isdigit: la palabra actual es un número.
+1. word_lower: la palabra actual en minúsculas.
+2. word_istitle: la palabra actual empieza en mayúsculas.
+3. word_isupper: la palabra actual está en mayúsculas.
+4. word_isdigit: la palabra actual es un número.
 
 Por otro lado en los paramétricos tenemos:
 1. NPrevTags(n): la tupla de los últimos n tags.
 2. PrevWord(f): Dado un feature f, aplicarlo sobre la palabra anterior en lugar de la actual.
 
-####Ejercicio7
+#### Ejercicio7
 
 En este ejercicio implementamos la clase MEMM en el cual modela a Maximum Entropy Markov Models.
 
@@ -123,8 +129,8 @@ Recordemos que un memm es (por definición):
 * Conjunto finito de tags T.
 * Conjunto de hisotrias H.
 * Un entero d que identifica el número de __features__.
-* Una función f:HxK -> $R^{d}$ donde especifica los features del modelo
-* Parametro p y $\theta$
+* Una función f:HxK -> R^d donde especifica los features del modelo.
+* Parametro p y theta.
 
 Luego podremos etiquetar una oración como un hmm pero con features.
 A continuación algunos resultados:
