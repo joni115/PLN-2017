@@ -1,5 +1,6 @@
 from collections import Counter, defaultdict
 
+
 class BaselineTagger:
 
     def __init__(self, tagged_sents):
@@ -7,7 +8,8 @@ class BaselineTagger:
         tagged_sents -- training sentences, each one being a list of pairs.
         """
 
-        words_tagged = [word_tagg for sent in tagged_sents for word_tagg in sent]
+        words_tagged = [word_tagg for sent in tagged_sents
+                        for word_tagg in sent]
         words_tagged_count = Counter(words_tagged)
 
         # best_tag will save the best tag of the word.

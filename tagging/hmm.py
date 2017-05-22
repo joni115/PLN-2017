@@ -2,8 +2,10 @@ from collections import defaultdict, Counter
 
 from math import log2
 
+
 def log2m(x):
     return (lambda x: log2(x) if x > 0 else float('-inf'))(x)
+
 
 class HMM:
 
@@ -54,7 +56,8 @@ class HMM:
 
         prob = 1
         for index in range(n - 1, len(list_y)):
-            prob *= self.trans_prob(list_y[index], tuple(list_y[index-n+1: index]))
+            prob *= self.trans_prob(list_y[index],
+                                    tuple(list_y[index-n+1: index]))
 
         return prob
 
@@ -87,7 +90,8 @@ class HMM:
 
         prob = 0
         for index in range(n - 1, len(list_y)):
-            prob += log2m(self.trans_prob(list_y[index], tuple(list_y[index-n+1: index])))
+            prob += log2m(self.trans_prob(list_y[index],
+                          tuple(list_y[index-n+1: index])))
 
         return prob
 
@@ -132,9 +136,7 @@ class ViterbiTagger:
         tag_prob = self.hmm.trans_prob
         out_prob = self.hmm.out_prob
         set_tags = self.hmm.tag_set
-        words = list(sent)
         m = len(sent)
-
 
         self._pi = pi = defaultdict(dict)
 
@@ -157,7 +159,8 @@ class ViterbiTagger:
                     if q:
                         prob_tagg += log2m(q) + log2m(e)
                         key_tag = (prev_tags + (tag,))[1:]
-                        if key_tag not in pi[k] or  pi[k][key_tag][0] < prob_tagg:
+                        if (key_tag not in pi[k] or
+                                pi[k][key_tag][0] < prob_tagg):
                             pi[k][key_tag] = (prob_tagg, tagging + [tag])
 
         max_prob = float('-inf')
@@ -173,7 +176,7 @@ class ViterbiTagger:
 
 
 class MLHMM(HMM):
- 
+
     def __init__(self, n, tagged_sents, addone=True):
         """
         n -- order of the model.
@@ -209,12 +212,10 @@ class MLHMM(HMM):
                 tcount1[tags[index:index+n]] += 1
                 tcount2[tags[index:index+n-1]] += 1
 
-
         self.tag_set = set(count_tags.keys())
         # estimate trans and out probabilities
         self.__get_out_prob()
         self.__get_trans_prob()
-
 
     def __get_out_prob(self):
         """
@@ -246,10 +247,9 @@ class MLHMM(HMM):
                 denom += T
             trans[tags[:-1]][tags[-1]] = num / denom
 
-
     def tcount(self, tokens):
         """Count for an n-gram or (n-1)-gram of tags.
- 
+
         tokens -- the n-gram or (n-1)-gram tuple of tags.
         """
         n = self.n
@@ -285,7 +285,7 @@ class MLHMM(HMM):
         return result
 
     def out_prob(self, word, tag):
-        """OverWrite of out_prob. 
+        """OverWrite of out_prob.
         Probability of a word given a tag whith smooth addone.
 
         word -- the word.
@@ -295,5 +295,4 @@ class MLHMM(HMM):
             result = 1 / len(self.__W)
         else:
             result = self.out.get(tag, {}).get(word, 0)
-
         return result

@@ -27,11 +27,12 @@ def progress(msg, width=None):
     print('\b' * width + msg, end='')
     sys.stdout.flush()
 
+
 def print_confusion_matrix(conf_matrix, labels):
     print('|', end='')
-    print('{:^9}'.format('label/label'), end = '')
+    print('{:^9}'.format('label/label'), end='')
     for label in labels:
-        print ('|{:^9}'.format(label), end='')
+        print('|{:^9}'.format(label), end='')
     print('|')
     print('|:{:-<9}:'.format(''), end='')
     for _ in range(len(labels)):
@@ -80,12 +81,14 @@ if __name__ == '__main__':
         total += len(sent)
 
         # unknown words
-        hits_sent_unknown = [hits_sent[j] for j in range(len(hits_sent)) if model.unknown(word_sent[j])]
+        hits_sent_unknown = [hits_sent[j] for j in range(len(hits_sent))
+                             if model.unknown(word_sent[j])]
         hits_unknown += sum(hits_sent_unknown)
         total_unknown += len(hits_sent_unknown)
 
         # known word
-        hits_sent_known = [hits_sent[j] for j in range(len(hits_sent)) if not model.unknown(word_sent[j])]
+        hits_sent_known = [hits_sent[j] for j in range(len(hits_sent))
+                           if not model.unknown(word_sent[j])]
         hits_known += sum(hits_sent_known)
         total_known += len(hits_sent_known)
 
@@ -93,8 +96,11 @@ if __name__ == '__main__':
         acc_known = float(hits_known) / total_known
         acc_unknown = float(hits_unknown) / total_unknown
 
-        progress('{:3.1f}% ({:2.2f}% {:2.2f}% {:2.2f}%)'.format(float(i) * 100 / n, acc * 100, acc_known * 100, acc_unknown * 100))
-
+        prog = float(i) * 100 / n
+        progress('{:3.1f}% ({:2.2f}% {:2.2f}% {:2.2f}%)'.format(
+                prog, acc * 100,
+                acc_known * 100,
+                acc_unknown * 100))
 
     assert total == total_known + total_unknown
     assert hits == hits_known + hits_unknown
