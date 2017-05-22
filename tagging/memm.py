@@ -11,14 +11,15 @@ from tagging.features import (History, word_lower, word_istitle, word_isupper,
 
 # for classifier
 CLF = {
-    'lg': LogisticRegression,
+    'lr': LogisticRegression,
     'mnb': MultinomialNB,
     'lsvc': LinearSVC
 }
 
+
 class MEMM:
 
-    def __init__(self, n, tagged_sents, clf='lg'):
+    def __init__(self, n, tagged_sents, clf='lr'):
         """
         n -- order of the model.
         tagged_sents -- list of sentences, each one being a list of pairs.
@@ -39,23 +40,23 @@ class MEMM:
         # pipeline:
         # make the vectorizer => transformer => classifier easier to work
         classifier = Pipeline([('vect', Vectorizer(features)),
-                              ('clf',CLF[clf]())])
+                              ('clf', CLF[clf]())])
         # train the classifier.
         self.classifier = classifier.fit(training_histories, tags)
-
 
     def sents_histories(self, tagged_sents):
         """
         Iterator over the histories of a corpus.
- 
+
         tagged_sents -- the corpus (a list of sentences)
         """
-        return [histories for sent in tagged_sents for histories in self.sent_histories(sent)]
- 
+        return [histories for sent in tagged_sents for histories in
+                self.sent_histories(sent)]
+
     def sent_histories(self, tagged_sent):
         """
         Iterator over the histories of a tagged sentence.
- 
+
         tagged_sent -- the tagged sentence (a list of pairs (word, tag)).
         """
         n = self.n
@@ -66,21 +67,21 @@ class MEMM:
         tags = ('<s>',) * (n - 1) + tags
         sent = list(words)
 
-        return [History(sent, tags[index:index+n-1], index) for index in range(len(words))]
-
+        return [History(sent, tags[index:index+n-1], index) for index in
+                range(len(words))]
 
     def sents_tags(self, tagged_sents):
         """
         Iterator over the tags of a corpus.
- 
+
         tagged_sents -- the corpus (a list of sentences)
         """
         return [tag for sent in tagged_sents for tag in self.sent_tags(sent)]
- 
+
     def sent_tags(self, tagged_sent):
         """
         Iterator over the tags of a tagged sentence.
- 
+
         tagged_sent -- the tagged sentence (a list of pairs (word, tag)).
         """
         if not tagged_sent:
@@ -90,7 +91,7 @@ class MEMM:
 
     def tag(self, sent):
         """Tag a sentence.
- 
+
         sent -- the sentence.
         """
         n = self.n
@@ -107,14 +108,14 @@ class MEMM:
 
     def tag_history(self, h):
         """Tag a history.
- 
+
         h -- the history.
         """
         return self.classifier.predict([h])[0]
 
     def unknown(self, w):
         """Check if a word is unknown for the model.
- 
+
         w -- the word.
         """
         return w not in self.__V
