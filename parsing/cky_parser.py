@@ -4,6 +4,8 @@ from nltk.grammar import PCFG
 
 from math import log2
 
+from nltk.tree import Tree
+
 def log2m(x):
     return (lambda x: log2(x) if x > 0 else float('-inf'))(x)
 
@@ -13,6 +15,7 @@ class CKYParser:
         """
         grammar -- a binarised NLTK PCFG. In chomsky normal form.
         """
+        self.S = grammar.start()
         q = defaultdict(dict)
         q_2 = defaultdict(dict)
 
@@ -35,10 +38,12 @@ class CKYParser:
 
         # inicialization
         pi = defaultdict(dict)
+        bp = defaultdict(dict)
         for i in range(1, n + 1):
             xi = sent[i-1]
             for nonT, prob in self.q_terminals[(xi,)].items():
                 pi[(i,i)][nonT] = log2m(prob)
+                bp[(i,i)][nonT] = Tree(nonT, [xi])
 
         for l in range(1, n):
             for i in range(1, n-l+1):
@@ -53,22 +58,11 @@ class CKYParser:
                              actual_prob = pi[(i, j)].get(X, float('-inf'))
                              if prob > actual_prob:
                                  pi[(i, j)][X] = prob
+                                 last_tree = [bp[(i, s)][Y], bp[(s+1, j)][Z]]
+                                 bp[(i, j)][X] = Tree(X, last_tree)
 
-        return pi
+        best_prob = pi[(1, n)].get(self.S, float('-inf'))
+        best_parser = bp[(1, n)].get(self.S, None)
 
+        return best_prob, best_parser
 
-grammar = PCFG.fromstring(
-    """
-        S -> NP VP              [1.0]
-        NP -> Det Noun          [0.6]
-        NP -> Noun Adj          [0.4]
-        VP -> Verb NP           [1.0]
-        Det -> 'el'             [1.0]
-        Noun -> 'gato'          [0.9]
-        Noun -> 'pescado'       [0.1]
-        Verb -> 'come'          [1.0]
-        Adj -> 'crudo'          [1.0]
-    """)
-
-parser = CKYParser(grammar)
-print(parser.parse('el gato come pescado crudo'.split()))
