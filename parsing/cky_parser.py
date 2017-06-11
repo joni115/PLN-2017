@@ -15,14 +15,14 @@ class CKYParser:
         """
         grammar -- a binarised NLTK PCFG. In chomsky normal form.
         """
-        self.S = grammar.start()
+        self.S = str(grammar.start())
         q = defaultdict(dict)
         q_2 = defaultdict(dict)
 
         for prod in grammar.productions():
             if len(prod.rhs()) == 1:
                 q_2[prod.rhs()][prod.lhs()] = prod.prob()
-            q[prod.lhs()][prod.rhs()] = prod.prob()
+            q[str(prod.lhs())][prod.rhs()] = prod.prob()
 
         self.q_nonTerminals = dict(q)
         self.q_terminals = dict(q_2)
@@ -42,8 +42,8 @@ class CKYParser:
         for i in range(1, n + 1):
             xi = sent[i-1]
             for nonT, prob in self.q_terminals[(xi,)].items():
-                pi[(i,i)][nonT] = log2m(prob)
-                bp[(i,i)][nonT] = Tree(nonT, [xi])
+                pi[(i,i)][str(nonT)] = log2m(prob)
+                bp[(i,i)][str(nonT)] = Tree(str(nonT), [xi])
 
         for l in range(1, n):
             for i in range(1, n-l+1):
@@ -52,17 +52,18 @@ class CKYParser:
                     for X in N:
                         R = ((term, prob) for (term, prob) in self.q_nonTerminals[X].items() if len(term) == 2)
                         for ((Y, Z), prob) in R:
-                             prob = log2m(prob)
-                             prob += pi[(i, s)].get(Y, float('-inf'))
-                             prob +=  pi[(s+1, j)].get(Z, float('-inf'))
-                             actual_prob = pi[(i, j)].get(X, float('-inf'))
-                             if prob > actual_prob:
-                                 pi[(i, j)][X] = prob
-                                 last_tree = [bp[(i, s)][Y], bp[(s+1, j)][Z]]
-                                 bp[(i, j)][X] = Tree(X, last_tree)
+                            prob = log2m(prob)
+                            prob += pi[(i, s)].get(str(Y), float('-inf'))
+                            prob +=  pi[(s+1, j)].get(str(Z), float('-inf'))
+                            actual_prob = pi[(i, j)].get(X, float('-inf'))
+                            if prob > actual_prob:
+                               pi[(i, j)][X] = prob
+                               last_tree = [bp[(i, s)][str(Y)], bp[(s+1, j)][str(Z)]]
+                               bp[(i, j)][X] = Tree(X, last_tree)
 
         best_prob = pi[(1, n)].get(self.S, float('-inf'))
         best_parser = bp[(1, n)].get(self.S, None)
 
+        self._pi = dict(pi)
+        self._bp = dict(bp)
         return best_prob, best_parser
-
