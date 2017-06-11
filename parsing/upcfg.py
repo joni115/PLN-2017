@@ -57,17 +57,3 @@ class UPCFG:
             return Tree(self.start, [Tree(tag, [word]) for word, tag in tagged_sent])
 
         return lexicalize(tree, sent)
-
-t = Tree.fromstring(
-    """
-        (S
-            (NP (Det el) (Noun gato))
-            (VP (Verb come) (NP (Noun pescado) (Adj crudo)))
-        )
-    """)
-model = UPCFG([t], start='S')
-
-sent = 'el gato come pescado crudo'.split()
-tags = 'Det Noun Verb Noun Adj'.split()
-tagged_sent = list(zip(sent, tags))
-tree = model.parse(tagged_sent)
