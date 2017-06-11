@@ -13,21 +13,20 @@ class UPCFG:
     """Unlexicalized PCFG.
     """
  
-    def __init__(self, parsed_sents, start='sentence'):
+    def __init__(self, parsed_sents, start='sentence', horzMarkov=None):
         """
         parsed_sents -- list of training trees.
         """
-        self.start = Nonterminal(start)
+        self.start = start
 
         count_Y_Z = defaultdict(lambda: defaultdict(int))
         count_X = defaultdict(int)
         for t in parsed_sents:
             unle_trees = unlexicalize(t.copy(deep=True))
-            for unle_t in unle_trees:
-                unle_t.chomsky_normal_form()
-                for prod in unle_t.productions():
-                    count_Y_Z[prod.lhs()][prod.rhs()] += 1
-                    count_X[prod.lhs()] += 1
+            unle_trees.chomsky_normal_form(horzMarkov=horzMarkov)
+            for prod in unle_trees.productions():
+                count_Y_Z[prod.lhs()][prod.rhs()] += 1
+                count_X[prod.lhs()] += 1
 
 
         productions = []
@@ -57,7 +56,6 @@ class UPCFG:
         if prob_sent == float('-inf'):
             return Tree(self.start, [Tree(tag, [word]) for word, tag in tagged_sent])
 
-        print('me dio diferente de -inf')
         return lexicalize(tree, sent)
 
 t = Tree.fromstring(
@@ -67,9 +65,9 @@ t = Tree.fromstring(
             (VP (Verb come) (NP (Noun pescado) (Adj crudo)))
         )
     """)
+model = UPCFG([t], start='S')
 
-model = UPCFG([t])
-sent = 'gato el come pescado crudo'.split()
-tags = 'Noun Det Verb Noun Adj'.split()
+sent = 'el gato come pescado crudo'.split()
+tags = 'Det Noun Verb Noun Adj'.split()
 tagged_sent = list(zip(sent, tags))
 tree = model.parse(tagged_sent)
