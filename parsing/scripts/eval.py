@@ -52,7 +52,8 @@ if __name__ == '__main__':
         parsed_sents = [tree for tree in parsed_sents if len(tree.leaves()) <= m]
 
     print('Parsing...')
-    hits, un_hits, total_gold, total_model = 0, 0, 0, 0
+    hits, total_gold, total_model = 0, 0, 0
+    un_hits, un_total_gold, un_total_model = 0, 0, 0
     n = len(parsed_sents)
     format_str = '{:3.1f}% ({}/{}) (P={:2.2f}%, R={:2.2f}%, F1={:2.2f}%)'
     progress(format_str.format(0.0, 0, n, 0.0, 0.0, 0.0))
@@ -67,14 +68,15 @@ if __name__ == '__main__':
         gold_spans = spans(gold_parsed_sent, unary=False)
         model_spans = spans(model_parsed_sent, unary=False)
         hits += len(gold_spans & model_spans)
+        total_gold += len(gold_spans)
+        total_model += len(model_spans)
 
         # compute unlabeled scores
         un_gold_spans = set((i,j) for n, i, j in gold_spans)
         un_model_spans = set((i, j) for n, i, j in model_spans)
         un_hits += len(un_gold_spans & un_model_spans)
-
-        total_gold += len(gold_spans)
-        total_model += len(model_spans)
+        un_total_gold += len(un_gold_spans)
+        un_total_model += len(un_model_spans)
 
         # compute labeled partial results
         prec = float(hits) / total_model * 100
@@ -82,8 +84,8 @@ if __name__ == '__main__':
         f1 = 2 * prec * rec / (prec + rec)
 
         # compute unlabel partial results
-        un_prec = float(un_hits) / total_model * 100
-        un_rec = float(un_hits) / total_gold * 100
+        un_prec = float(un_hits) / un_total_model * 100
+        un_rec = float(un_hits) / un_total_gold * 100
         un_f1 = 2 * un_prec * un_rec / (un_prec + un_rec)
 
         progress(format_str.format(float(i+1) * 100 / n, i+1, n, prec, rec, f1))
@@ -96,6 +98,6 @@ if __name__ == '__main__':
     print('  F1: {:2.2f}% '.format(f1))
     print('Unlabeled')
     print('  Precision: {:2.2f}%'.format(un_prec))
-    print('  Precision: {:2.2f}%'.format(un_rec))
-    print('  Precision: {:2.2f}%'.format(un_f1))
+    print('  Recall: {:2.2f}%'.format(un_rec))
+    print('  F1: {:2.2f}%'.format(un_f1))
 
