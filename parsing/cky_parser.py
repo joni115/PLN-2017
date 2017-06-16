@@ -61,7 +61,6 @@ class CKYParser:
                     # have probabilty > 0 
                     for Y, y_prob in pi[(i, s)].items():
                         for Z, z_prob in pi[(s + 1, j)].items():
-                            print(self.__q_prob)
                             for X, x_prob in self.__q_prob.get((Y, Z), {}).items():
                                 prob = y_prob + z_prob + x_prob
                                 best_prob = pi[(i, j)].get(X, float('-inf'))
