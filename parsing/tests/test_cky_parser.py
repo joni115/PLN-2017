@@ -64,17 +64,11 @@ class TestCKYParser(TestCase):
             (5, 5): {'Adj': Tree.fromstring("(Adj crudo)")},
 
             (1, 2): {'NP': Tree.fromstring("(NP (Det el) (Noun gato))")},
-            (2, 3): {},
-            (3, 4): {},
             (4, 5): {'NP': Tree.fromstring("(NP (Noun pescado) (Adj crudo))")},
 
-            (1, 3): {},
-            (2, 4): {},
             (3, 5): {'VP': Tree.fromstring(
                 "(VP (Verb come) (NP (Noun pescado) (Adj crudo)))")},
 
-            (1, 4): {},
-            (2, 5): {},
 
             (1, 5): {'S': Tree.fromstring(
                 """(S
