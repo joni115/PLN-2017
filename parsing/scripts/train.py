@@ -25,7 +25,7 @@ from parsing.upcfg import UPCFG
 
 
 def train_upcfg(parsed_sents):
-    return UPCFG(parsed_sents, n)
+    return UPCFG(parsed_sents,horzMarkov=n)
 
 models = {
     'flat': Flat,
