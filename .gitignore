@@ -1,3 +1,4 @@
+*.tx
 *.txt
 __pycache__
 languagemodeling/scripts/corpus/
