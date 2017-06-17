@@ -16,7 +16,7 @@ Los parseos unlabeled son aquellos que no nos interesan los *tags*. En cambio lo
 
 __Labeled__
 
-|     \     |  Flat  | Rbranch | Lbranch |
+|   Metric  |  Flat  | Rbranch | Lbranch |
 |:---------:|:------:|:-------:|:-------:|
 | Precision | 99.33% |  8.81%  |  8.81%  |
 | Recall    | 14.58% | 14.58%  | 14.58%  |
@@ -25,7 +25,7 @@ __Labeled__
 
 __Unlabeled__
 
-|     \     |  Flat  | Rbranch | Lbranch |
+|  Metric   |  Flat  | Rbranch | Lbranch |
 |:---------:|:------:|:-------:|:-------:|
 | Precision | 100%   |  8.88%  | 14.71%  |
 | Recall    | 14.59% | 14.69%  | 24.35%  |
@@ -33,7 +33,7 @@ __Unlabeled__
 
 __Tiempos__
 
-|   \    | Tiempo(seg) |
+| Metric | Tiempo(seg) |
 |:------:|:-----------:|
 |  Flat  |     6.85    |
 |Rbranch |     7.35    |
@@ -59,3 +59,55 @@ Es decir es ambiguo debido a que puede tener dos significados:
 2. El hombre esta mirando al perro, pero quien tiene el telescopio es el perro. El árbol será:
 
 ![Árbol sin coherencia](graph2.png "Árbol 2")
+
+en test_cky_paser.py se puede ver la grámatica. Sólo basta cambiar las probabilidades de VP y da como resultante otro árbol.
+
+--------------------------------------------
+#### Ejercicio 3
+
+Implementamos una UPCFG, es decir PCFG cuyas reglas y probabilidades se obtienen a partir de un corpus de entrenamiento. Luego entrenamos y evaluamos la UPCFG para todas las oraciones de largo menor o igual a 20.
+
+Antes de exponer los resultados explicaremos que es una PCFG. Una PCFG es una gramatica libre de contexto (CFG) donde tiene un parametro *q* probabilistico, es decir para cada regla X -> Y perteneciente en la gramatica, *q* le asigna una probabilidad.
+
+__Resultados__
+
+|   Metric  |  Labaled  | Unlabeled |
+|:---------:|:---------:|:---------:|
+| Precision |   72.59%  |   74.76%  |
+| Recall    |   72.44%  |   74.61%  |
+|    F1     |   72.51%  |   74.69%  |
+
+Claramente este parseador es mucho mejor que el del ejercicio1.
+
+--------------------------------------------
+#### Ejercicio 4
+
+En este ejercicio se modifico la UPCFG para admitir el uso de Markovización Horizontal de orden n para un n dado (con el parámetro opcional horzMarkov). También agregamos al script de entrenamiento (train.py) una opción de línea de comandos que habilite esta funcionalidad. Por último entrenamos y evaluamos para varios valores de n (0, 1, 2 y 3).
+
+__Labeled__
+
+| n | Precision  | Recall |   F1   |
+|:-:|:----------:|:------:|:------:|
+| 0 |   69.77%   | 69.85% | 69.81% |
+| 1 |   74.26%   | 74.27% | 74.27% |
+| 2 |   74.60%   | 74.15% | 74.37% |
+| 3 |   73.78%   | 73.15% | 73.46% |
+
+__Unlabeled__
+
+| n | Precision  | Recall |   F1   |
+|:-:|:----------:|:------:|:------:|
+| 0 |   71.67%   | 71.74% | 71.71% |
+| 1 |   76.32%   | 76.33% | 76.33% |
+| 2 |   76.61%   | 76.15% | 76.38% |
+| 3 |   75.92%   | 75.27% | 75.59% |
+
+
+__Time__
+
+| n | Tiempo |
+|:-:|:------:|
+| 0 |  2m35s |
+| 1 |  3m52s |
+| 2 |  5m51s |
+| 3 |  7m42s |
