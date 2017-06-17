@@ -47,6 +47,7 @@ class CKYParser:
         bp = defaultdict(dict)
         for i in range(1, n + 1):
             xi = sent[i-1]
+            # X -> xi in R. second form of chosmky.
             for nonT, prob in self.__q_prob[(xi,)].items():
                 pi[(i,i)][nonT] = log2m(prob)
                 bp[(i,i)][nonT] = Tree(nonT, [xi])
